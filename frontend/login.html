@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · PAYFLOW</title>
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="auth-body">
+  <div class="auth-wrap">
+    <div class="auth-hero">
+      <div class="brand" style="border:0;padding:0"><div class="brand-mark">P</div><div class="brand-name">PAY<span>FLOW</span></div></div>
+      <h1>Money moves.<br><span>Ledgers remember.</span></h1>
+      <p>A unified digital payments ecosystem built on an immutable, integer-paise double-entry ledger. Every rupee has a source and a destination.</p>
+      <div class="auth-features">
+        <div class="auth-feature"><i>◇</i><span>Append-only journal with zero-sum trial balance</span></div>
+        <div class="auth-feature"><i>⛨</i><span>Argon2id · TOTP MFA · AES-256-GCM secrets</span></div>
+        <div class="auth-feature"><i>⌁</i><span>UPI-style VPAs, dynamic QR and collect requests</span></div>
+        <div class="auth-feature"><i>▥</i><span>Pandas + Matplotlib server-side analytics</span></div>
+      </div>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-card">
+        <h2>Welcome back</h2>
+        <div class="muted">Sign in to your simulated PAYFLOW account.</div>
+        <form id="login-form">
+          <div class="field"><label>Username or email</label><input id="username" required autocomplete="username" placeholder="aditi_sharma"></div>
+          <div class="field"><label>Password</label><input id="password" type="password" required autocomplete="current-password" placeholder="••••••••"></div>
+          <div class="field hidden" id="mfa-field"><label>TOTP code</label><input id="totp" inputmode="numeric" placeholder="6-digit code"></div>
+          <div id="login-error" class="danger text-xs hidden"></div>
+          <button class="btn btn-primary btn-block mt-2" id="login-btn" type="submit">Sign In →</button>
+        </form>
+        <div class="auth-footer">New to PAYFLOW? <a href="/register.html">Create an account</a></div>
+        <div class="demo-creds">
+          <b>DEMO CREDENTIALS</b><br>
+          Customer · aditi_sharma / Customer@123<br>
+          Merchant · starbucks / Merchant@123<br>
+          Operator · operator / Oper@12345<br>
+          Auditor · auditor / Audit@12345<br>
+          Admin · admin / Admin@12345
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-stack" id="toast-stack"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('login-form');
+      const errBox = document.getElementById('login-error');
+      const mfaField = document.getElementById('mfa-field');
+      form.onsubmit = async function (e) {
+        e.preventDefault();
+        errBox.classList.add('hidden');
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Authenticating…';
+        const body = {
+          username: document.getElementById('username').value.trim(),
+          password: document.getElementById('password').value,
+        };
+        const totp = document.getElementById('totp').value.trim();
+        if (totp) body.totp_code = totp;
+        try {
+          const result = await PF.api('/auth/login', { method: 'POST', body: body });
+          if (result.mfa_required) {
+            mfaField.classList.remove('hidden');
+            PF.toast('Enter your authenticator code', 'info');
+          } else {
+            location.href = '/index.html';
+          }
+        } catch (err) {
+          errBox.textContent = err.message;
+          errBox.classList.remove('hidden');
+        } finally {
+          btn.disabled = false; btn.textContent = 'Sign In →';
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
