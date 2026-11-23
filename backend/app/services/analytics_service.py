@@ -16,14 +16,14 @@ from ..core.json_store import stores
 from .ledger_service import ledger
 
 plt.rcParams.update({
-    "figure.facecolor": "#111827",
-    "axes.facecolor": "#162032",
-    "axes.edgecolor": "#1e293b",
+    "figure.facecolor": "#000000",
+    "axes.facecolor": "#0b0c0f",
+    "axes.edgecolor": "#23252b",
     "axes.labelcolor": "#94a3b8",
     "xtick.color": "#94a3b8",
     "ytick.color": "#94a3b8",
     "text.color": "#f8fafc",
-    "grid.color": "#1e293b",
+    "grid.color": "#23252b",
     "font.size": 10,
     "axes.titlesize": 12,
 })
@@ -120,7 +120,7 @@ def dashboard(user_id: Optional[str], is_privileged: bool) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 def _svg(fig) -> str:
     buffer = io.BytesIO()
-    fig.savefig(buffer, format="svg", bbox_inches="tight", facecolor="#111827")
+    fig.savefig(buffer, format="svg", bbox_inches="tight", facecolor="#000000")
     plt.close(fig)
     return "data:image/svg+xml;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
 
@@ -190,7 +190,7 @@ def categories_chart(user_id: Optional[str] = None) -> Dict[str, Any]:
         wedges, texts, autotexts = ax.pie(
             values, labels=None, autopct=lambda p: f"{p:.1f}%",
             startangle=140, colors=CATEGORY_COLORS[:len(values)],
-            wedgeprops=dict(width=0.42, edgecolor="#111827", linewidth=2),
+            wedgeprops=dict(width=0.42, edgecolor="#000000", linewidth=2),
             pctdistance=0.78,
         )
         for t in autotexts:
@@ -254,7 +254,7 @@ def status_chart() -> Dict[str, Any]:
         ax.axis("off")
     else:
         ax.pie(sizes, labels=labels, colors=colors, autopct="%1.1f%%", startangle=120,
-               wedgeprops=dict(edgecolor="#111827", linewidth=2))
+               wedgeprops=dict(edgecolor="#000000", linewidth=2))
     ax.set_title("Success vs Failure Ratio")
     fig.tight_layout()
     return {

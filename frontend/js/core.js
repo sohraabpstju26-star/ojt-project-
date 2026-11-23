@@ -277,8 +277,8 @@
       e.preventDefault();
       const body = {
         recipient: view.querySelector('#recipient').value.trim(),
-        amount_paise: Math.round(parseFloat(view.querySelector('#amount').value) * 100),
-        fee_paise: Math.round(parseFloat(view.querySelector('#fee').value || '0') * 100),
+        amount_paise: PF.toPaise(view.querySelector('#amount').value),
+        fee_paise: PF.toPaise(view.querySelector('#fee').value || '0'),
         note: view.querySelector('#note').value || 'Payment',
         from_wallet_id: view.querySelector('#wallet').value,
       };
@@ -286,7 +286,7 @@
       if (totp) body.totp_code = totp;
       try {
         const result = await PF.api('/payments/send', { method: 'POST', body: body });
-        receiptModal(result.receipt);
+        PF.receiptModal(result.receipt);
       } catch (err) { PF.showError(err); }
     };
   };
@@ -339,7 +339,7 @@
       const amount = view.querySelector('#qr-amount').value;
       const note = view.querySelector('#qr-note').value;
       let url = '/payments/qr?';
-      if (amount) url += 'amount_paise=' + Math.round(parseFloat(amount) * 100) + '&';
+      if (amount) url += 'amount_paise=' + PF.toPaise(amount) + '&';
       if (note) url += 'note=' + encodeURIComponent(note);
       try {
         const data = await PF.api(url);
@@ -401,13 +401,18 @@
         parseArea.innerHTML = '<span class="danger">Missing pa (VPA) or am (amount).</span>';
         return;
       }
+      let amountPaise;
+      try { amountPaise = PF.toPaise(am); }
+      catch (e) {
+        parseArea.innerHTML = '<span class="danger">Invalid amount in QR payload.</span>';
+        return;
+      }
       parsed = { pa: pa, am: am, tn: params.get('tn') || 'QR checkout' };
       confirmBtn.disabled = false;
       parseArea.innerHTML = '<div class="card" style="box-shadow:none">' +
-        '<b>' + PF.esc(params.get('pn') || pa) + '</b> ' +
-        (state.user.role ? '' : '') +
+        '<b>' + PF.esc(params.get('pn') || pa) + '</b>' +
         '<div class="muted text-xs">' + PF.esc(pa) + ' · ' + PF.esc(parsed.tn) + '</div>' +
-        '<div class="kpi-value green mt-1">' + PF.inr(Math.round(parseFloat(am) * 100)) + '</div></div>';
+        '<div class="kpi-value green mt-1">' + PF.inr(amountPaise) + '</div></div>';
     }
     payloadInput.oninput = refresh;
 
@@ -518,7 +523,7 @@
         try {
           await PF.api('/wallets/top-up', { method: 'POST', body: {
             wallet_id: walletId,
-            amount_paise: Math.round(parseFloat(modal.querySelector('#top-amount').value) * 100),
+            amount_paise: PF.toPaise(modal.querySelector('#top-amount').value),
           }});
           PF.closeModal(); PF.toast('Wallet topped up', 'ok'); PF.route();
         } catch (err) { PF.showError(err); }
@@ -549,8 +554,8 @@
         await PF.api('/wallets/transfer', { method: 'POST', body: {
           from_wallet_id: view.querySelector('#int-from').value,
           to_wallet_id: view.querySelector('#int-to').value,
-          amount_paise: Math.round(parseFloat(view.querySelector('#int-amount').value) * 100),
-          fee_paise: Math.round(parseFloat(view.querySelector('#int-fee').value || '0') * 100),
+          amount_paise: PF.toPaise(view.querySelector('#int-amount').value),
+          fee_paise: PF.toPaise(view.querySelector('#int-fee').value || '0'),
           description: 'Wallet to wallet transfer',
         }});
         PF.toast('Internal transfer complete', 'ok'); PF.route();

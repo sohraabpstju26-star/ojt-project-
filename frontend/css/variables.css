@@ -1,11 +1,11 @@
 :root {
   /* Color Palette */
-  --bg-primary: #0a0e17;        /* Ultra-deep obsidian background */
-  --bg-secondary: #111827;      /* Dark navy surface */
-  --bg-card: #162032;           /* Elevated card container */
-  --bg-hover: #1f2d47;          /* Interactive hover highlight */
+  --bg-primary: #000000;        /* True black background */
+  --bg-secondary: #08090c;      /* Near-black surface */
+  --bg-card: #101114;           /* Elevated card container */
+  --bg-hover: #1a1b20;          /* Interactive hover highlight */
 
-  --border-subtle: #1e293b;     /* Primary border */
+  --border-subtle: #23252b;     /* Primary border */
   --border-focus: #3b82f6;      /* Active input border */
   --text-primary: #f8fafc;      /* Pure white high-contrast text */
   --text-secondary: #94a3b8;    /* Muted slate text */

@@ -191,9 +191,19 @@ class Ledger:
         with ledger_lock():
             total = self.validate_entry(lines, skip_balance_check=skip_balance_check)
             entries = stores.entries.read()
-            txn_id = transaction_id or new_transaction_id()
-            if any(e.get("transaction_id") == txn_id for e in entries):
-                raise LedgerError(f"Duplicate transaction id: {txn_id}")
+            existing_ids = {e.get("transaction_id") for e in entries}
+            if transaction_id:
+                if transaction_id in existing_ids:
+                    raise LedgerError(f"Duplicate transaction id: {transaction_id}")
+                txn_id = transaction_id
+            else:
+                txn_id = new_transaction_id()
+                for _ in range(10):
+                    if txn_id not in existing_ids:
+                        break
+                    txn_id = new_transaction_id()
+                else:
+                    raise LedgerError("Unable to allocate a unique transaction id")
             if reference is not None and any(e.get("reference") == reference for e in entries):
                 raise LedgerError(f"Duplicate reference: {reference}")
 

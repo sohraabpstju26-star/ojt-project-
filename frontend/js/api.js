@@ -21,6 +21,14 @@
     return data;
   };
 
+  // Exact string parsing: no floating-point arithmetic touches monetary values.
+  PF.toPaise = function (value) {
+    const text = String(value == null ? '' : value).trim();
+    if (!/^\d+(\.\d{1,2})?$/.test(text)) throw new Error('Enter a valid amount (max 2 decimals)');
+    const parts = text.split('.');
+    return Number(parts[0]) * 100 + Number((parts[1] || '').padEnd(2, '0'));
+  };
+
   PF.inr = function (paise) {
     return 'Rs. ' + (Number(paise || 0) / 100).toLocaleString('en-IN', {
       minimumFractionDigits: 2, maximumFractionDigits: 2,

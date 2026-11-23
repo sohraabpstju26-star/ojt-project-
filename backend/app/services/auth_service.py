@@ -206,10 +206,9 @@ def logout(token: Optional[str]) -> None:
 
 
 def active_sessions(user_id: str) -> List[Dict[str, Any]]:
-    return [
-        {k: v for k, v in s.items() if k != "token_hash"}
-        for s in stores.sessions.read() if s.get("user_id") == user_id
-    ]
+    # The stored value is a SHA-256 digest (never the raw token), so it is safe
+    # to return it: the UI needs it to display and revoke individual sessions.
+    return [dict(s) for s in stores.sessions.read() if s.get("user_id") == user_id]
 
 
 def revoke_session(user_id: str, token_hash: str) -> None:

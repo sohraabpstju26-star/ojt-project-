@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import urllib.parse
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, Optional
 
 import qrcode
@@ -25,6 +26,22 @@ class PaymentError(ValueError):
 
 def _rupees(paise: int) -> str:
     return f"Rs. {paise / 100:,.2f}"
+
+
+def rupees_to_paise(value: str) -> int:
+    """Convert a rupee string to integer paise without any float arithmetic."""
+    try:
+        amount = Decimal(str(value).strip())
+    except (InvalidOperation, ValueError):
+        raise PaymentError("Invalid monetary amount")
+    if amount < 0 or amount != amount.quantize(Decimal("0.01")):
+        raise PaymentError("Amount must have at most two decimal places")
+    return int(amount * 100)
+
+
+def paise_to_rupees_str(paise: int) -> str:
+    """Exact integer-paise to 'rupees.paise' string for QR payloads."""
+    return f"{paise // 100}.{paise % 100:02d}"
 
 
 def _primary_account(user_id: str) -> str:
@@ -104,7 +121,7 @@ def _check_limit(user: Dict[str, Any], amount: int) -> None:
 def qr_payload(user: Dict[str, Any], amount_paise: Optional[int] = None, note: Optional[str] = None) -> str:
     params = {"pa": user["vpa"], "pn": user["full_name"], "cu": "INR"}
     if amount_paise:
-        params["am"] = f"{amount_paise / 100:.2f}"
+        params["am"] = paise_to_rupees_str(amount_paise)
     if note:
         params["tn"] = note
     return "payflow://pay?" + urllib.parse.urlencode(params)
@@ -151,7 +168,7 @@ def send_money(user: Dict[str, Any], session: Dict[str, Any], payload, ip: Optio
     check_wallet_funds(wallet, amount + fee)
     _check_limit(user, amount + fee)
     assert_step_up(session, amount + fee, data.get("totp_code"), user)
-    reference = f"UPI/{datetime.now(timezone.utc).strftime('%Y%m%d')}/{new_id('r')[-8:]}"
+    reference = f"UPI/{datetime.now(timezone.utc).strftime('%Y%m%d')}/{new_id('r')[-12:]}"
     entry = ledger.transfer(
         from_account_id=wallet["account_id"],
         to_account_id=recipient["account_id"],
@@ -192,10 +209,7 @@ def scan_pay(user: Dict[str, Any], session: Dict[str, Any], payload, ip: Optiona
             "verified": False, "user_id": recipient["user_id"],
         }
     if "am" in parsed:
-        try:
-            amount = int(round(float(parsed["am"]) * 100))
-        except (ValueError, TypeError):
-            raise PaymentError("Invalid amount in QR payload")
+        amount = rupees_to_paise(parsed["am"])
         if amount <= 0:
             raise PaymentError("QR amount must be positive")
     else:
@@ -208,7 +222,7 @@ def scan_pay(user: Dict[str, Any], session: Dict[str, Any], payload, ip: Optiona
     check_wallet_funds(wallet, amount)
     _check_limit(user, amount)
     assert_step_up(session, amount, data.get("totp_code"), user)
-    reference = f"UPI/QR/{datetime.now(timezone.utc).strftime('%Y%m%d')}/{new_id('r')[-8:]}"
+    reference = f"UPI/QR/{datetime.now(timezone.utc).strftime('%Y%m%d')}/{new_id('r')[-12:]}"
     entry = ledger.transfer(
         from_account_id=wallet["account_id"],
         to_account_id=merchant["account_id"],
@@ -291,10 +305,10 @@ def receipt_html(receipt: Dict[str, Any]) -> str:
         for l in receipt["lines"]
     )
     return f"""<!doctype html><html><head><meta charset='utf-8'><title>PAYFLOW Receipt</title>
-<style>body{{font-family:Inter,Arial,sans-serif;background:#0a0e17;color:#f8fafc;padding:32px}}
-.card{{background:#162032;border:1px solid #1e293b;border-radius:14px;padding:28px;max-width:640px;margin:auto}}
+<style>body{{font-family:Inter,Arial,sans-serif;background:#000000;color:#f8fafc;padding:32px}}
+.card{{background:#101114;border:1px solid #23252b;border-radius:14px;padding:28px;max-width:640px;margin:auto}}
 h1{{color:#3b82f6}} table{{width:100%;border-collapse:collapse;margin-top:16px}}
-td,th{{padding:8px;border-bottom:1px solid #1e293b;text-align:left;font-size:13px}}
+td,th{{padding:8px;border-bottom:1px solid #23252b;text-align:left;font-size:13px}}
 .ok{{color:#10b981}}</style></head><body><div class='card'>
 <h1>PAYFLOW · Digital Receipt</h1><p class='ok'>● {receipt['status']}</p>
 <p><b>Transaction ID</b>: {receipt['transaction_id']}<br><b>Reference</b>: {receipt['reference']}<br>

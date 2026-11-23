@@ -24,7 +24,7 @@
             '<button class="btn btn-primary" type="submit">Update Password</button>' +
           '</form></div>' +
         '<div class="card"><div class="card-title">Multi-Factor Authentication</div>' +
-          '<div class="mt-2">' + PF.badge(state.user.mfa_enabled ? 'MFA ENABLED' : 'MFA DISABLED', state.user.mfa_enabled ? 'green' : 'amber') + '</div>' +
+          '<div class="mt-2">' + PF.badge(PF.state.user.mfa_enabled ? 'MFA ENABLED' : 'MFA DISABLED', PF.state.user.mfa_enabled ? 'green' : 'amber') + '</div>' +
           '<div class="card-sub mt-2">TOTP (RFC 6238) secrets are encrypted at rest with AES-256-GCM. Eight single-use recovery codes are issued on setup.</div>' +
           '<div class="flex gap-1 mt-2">' +
             '<button class="btn btn-sm btn-primary" id="mfa-setup">Set up / Rotate MFA</button>' +
@@ -109,12 +109,12 @@
       '<div class="grid grid-2">' +
         '<div class="card"><div class="card-title">Profile</div>' +
           '<div class="mt-2 text-sm secondary" style="line-height:2">' +
-            '<div class="between"><span>Full name</span><b>' + PF.esc(state.user.full_name) + '</b></div>' +
-            '<div class="between"><span>Username</span><b>' + PF.esc(state.user.username) + '</b></div>' +
-            '<div class="between"><span>Email</span><b>' + PF.esc(state.user.email) + '</b></div>' +
-            '<div class="between"><span>Phone</span><b>' + PF.esc(state.user.phone) + '</b></div>' +
-            '<div class="between"><span>VPA</span><b class="success mono">' + PF.esc(state.user.vpa) + '</b></div>' +
-            '<div class="between"><span>Role</span><b>' + PF.esc(state.user.role) + '</b></div>' +
+            '<div class="between"><span>Full name</span><b>' + PF.esc(PF.state.user.full_name) + '</b></div>' +
+            '<div class="between"><span>Username</span><b>' + PF.esc(PF.state.user.username) + '</b></div>' +
+            '<div class="between"><span>Email</span><b>' + PF.esc(PF.state.user.email) + '</b></div>' +
+            '<div class="between"><span>Phone</span><b>' + PF.esc(PF.state.user.phone) + '</b></div>' +
+            '<div class="between"><span>VPA</span><b class="success mono">' + PF.esc(PF.state.user.vpa) + '</b></div>' +
+            '<div class="between"><span>Role</span><b>' + PF.esc(PF.state.user.role) + '</b></div>' +
           '</div></div>' +
         '<div class="card"><div class="card-title">Preferences</div>' +
           '<form id="settings-form" class="form-grid mt-2">' +
@@ -142,7 +142,7 @@
         await PF.api('/settings', { method: 'PUT', body: {
           theme: theme,
           currency_format: view.querySelector('#s-currency').value,
-          daily_limit_paise: Math.round(parseFloat(view.querySelector('#s-limit').value) * 100),
+          daily_limit_paise: PF.toPaise(view.querySelector('#s-limit').value),
           notifications: {
             payments: view.querySelector('#s-payments').checked,
             security: view.querySelector('#s-security').checked,
@@ -161,7 +161,7 @@
   // -------------------------------------------------------------------------
   PF.views.accounts = async function (view) {
     const accounts = await PF.api('/ledger/accounts');
-    const canWrite = ['Operator', 'Administrator'].includes(state.user.role);
+    const canWrite = ['Operator', 'Administrator'].includes(PF.state.user.role);
     const rows = accounts.map(function (a) {
       return '<tr><td class="mono">' + PF.esc(a.code) + '</td><td>' + PF.esc(a.name) + '</td>' +
         '<td>' + PF.badge(a.account_type, a.account_type === 'Asset' ? 'blue' :
@@ -222,7 +222,7 @@
   // -------------------------------------------------------------------------
   PF.views.ledger = async function (view) {
     const [tb, accounts] = await Promise.all([PF.api('/ledger/trial-balance'), PF.api('/ledger/accounts')]);
-    const canWrite = ['Operator', 'Administrator'].includes(state.user.role);
+    const canWrite = ['Operator', 'Administrator'].includes(PF.state.user.role);
     const rows = accounts.map(function (a) {
       return '<tr><td class="mono">' + PF.esc(a.code) + '</td><td>' + PF.esc(a.name) + '</td>' +
         '<td>' + a.account_type + '</td><td class="align-right">' + PF.inr(a.total_debits) + '</td>' +
@@ -286,7 +286,7 @@
           modal.querySelector('#ref-go').onclick = async function () {
             const body = { reason: modal.querySelector('#ref-reason').value };
             const val = modal.querySelector('#ref-amount').value;
-            if (val) body.refund_amount_paise = Math.round(parseFloat(val) * 100);
+            if (val) body.refund_amount_paise = PF.toPaise(val);
             try { await PF.api('/ledger/refund/' + b.dataset.ref, { method: 'POST', body: body });
               PF.closeModal(); PF.toast('Refund posted', 'ok'); PF.route(); } catch (err) { PF.showError(err); }
           };
@@ -354,7 +354,7 @@
       }).join('');
       return '<tr><td class="mono">' + PF.esc(u.username) + '</td><td>' + PF.esc(u.full_name) + '</td>' +
         '<td>' + PF.esc(u.vpa) + '</td>' +
-        '<td><select class="user-role" data-user="' + u.id + '"' + (u.id === state.user.id ? ' disabled' : '') + '>' + select + '</select></td>' +
+        '<td><select class="user-role" data-user="' + u.id + '"' + (u.id === PF.state.user.id ? ' disabled' : '') + '>' + select + '</select></td>' +
         '<td class="align-right">' + PF.inr(u.balance_paise) + '</td>' +
         '<td>' + (u.locked_until ? PF.badge('LOCKED', 'red') : PF.badge('ACTIVE', 'green')) + '</td>' +
         '<td><button class="btn btn-sm" data-unlock="' + u.id + '">Unlock</button></td></tr>';

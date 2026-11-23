@@ -80,7 +80,7 @@ def top_up(user: Dict[str, Any], payload) -> Dict[str, Any]:
     if not wallet:
         raise WalletError("Wallet not found")
     amount = int(data["amount_paise"])
-    reference = data.get("reference") or f"TOPUP/{user['username'].upper()}/{new_id('r')[-8:]}"
+    reference = data.get("reference") or f"TOPUP/{user['username'].upper()}/{new_id('r')[-12:]}"
     entry = ledger.top_up(
         wallet["account_id"], amount,
         description=f"Simulated top-up to {wallet['label']}",

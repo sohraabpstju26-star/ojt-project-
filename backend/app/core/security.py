@@ -132,4 +132,5 @@ def new_id(prefix: str) -> str:
 def new_transaction_id() -> str:
     from datetime import datetime, timezone
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    return f"TXN_{stamp}{secrets.token_hex(2).upper()}"
+    # 48 bits of randomness: collisions are negligible even at high velocity.
+    return f"TXN_{stamp}{secrets.token_hex(6).upper()}"

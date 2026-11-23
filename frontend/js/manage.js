@@ -289,7 +289,7 @@
         try {
           await PF.api('/requests', { method: 'POST', body: {
             payer: modal.querySelector('#r-payer').value.trim(),
-            amount_paise: Math.round(parseFloat(modal.querySelector('#r-amount').value) * 100),
+            amount_paise: PF.toPaise(modal.querySelector('#r-amount').value),
             note: modal.querySelector('#r-note').value || 'Payment request',
           }});
           PF.closeModal(); PF.toast('Request sent', 'ok'); PF.route();
