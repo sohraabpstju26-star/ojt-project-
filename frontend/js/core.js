@@ -160,7 +160,7 @@
         '<td>' + PF.badge(t.category, 'blue') + '</td>' +
         '<td class="align-right ' + (credit ? 'success' : 'danger') + '">' + (credit ? '+' : '−') + PF.inr(t.amount_paise) + '</td>' +
         '<td class="muted text-xs nowrap">' + PF.esc(PF.fmtDate(t.timestamp)) + '</td></tr>';
-    }).join('');
+    });
 
     view.innerHTML =
       '<div class="grid grid-4 mb-2">' +

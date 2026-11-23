@@ -101,7 +101,8 @@
   };
 
   PF.table = function (headers, rows, emptyText) {
-    if (!rows || !rows.length) {
+    if (typeof rows === 'string') rows = [rows]; // tolerate pre-joined markup
+    if (!Array.isArray(rows) || !rows.length) {
       return '<div class="empty">' + PF.esc(emptyText || 'No records yet.') + '</div>';
     }
     return '<div class="table-wrap"><table><thead><tr>' +
