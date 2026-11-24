@@ -289,6 +289,51 @@ tbody tr:last-child td { border-bottom: 0; }
 .tile-title { font-weight: 600; font-size: 16px; color: var(--text-primary); }
 .tile-sub { color: var(--text-muted); font-size: 13px; }
 
+/* ---------- Receive / QR page ---------- */
+.receive-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap); }
+.qr-card { text-align: center; }
+.qr-card .card-head { text-align: left; }
+.qr-stage { position: relative; display: flex; justify-content: center; padding: 26px 0 12px; }
+.qr-glow {
+  position: absolute; width: 270px; height: 270px; border-radius: 50%; top: 6px;
+  background: radial-gradient(circle, rgba(255,121,0,.18), transparent 66%); filter: blur(8px); pointer-events: none;
+}
+.qr-frame {
+  position: relative; background: #ffffff; padding: 18px; border-radius: 18px;
+  border: 2px solid var(--accent); display: inline-block; line-height: 0;
+  box-shadow: 0 18px 44px -14px rgba(255,121,0,.38);
+}
+.qr-frame svg { width: 240px; height: 240px; display: block; }
+.qr-identity { margin-top: 18px; }
+.qr-name { font-size: 20px; font-weight: 700; }
+.qr-identity .mono { color: var(--accent); margin-top: 4px; }
+.qr-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.vpa-display {
+  display: flex; align-items: center; gap: 12px; background: var(--bg-secondary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px;
+}
+.vpa-display span { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+.vpa-display b { flex: 1; font-family: var(--font-mono); color: var(--accent); font-size: 15px; overflow-wrap: anywhere; }
+.chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip {
+  background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary);
+  border-radius: var(--radius-full); padding: 9px 15px; font-size: 14px; cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s, transform .2s;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+.chip.active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); font-weight: 700; }
+.receive-status {
+  margin-top: 16px; padding: 12px 15px; border-radius: var(--radius-sm);
+  background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--accent-2); font-size: 14px;
+}
+.receive-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-top: 26px; }
+.step-row {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 18px; background: var(--bg-secondary);
+}
+.step-row b { display: block; color: var(--accent); font-size: 13px; margin-bottom: 8px; }
+.step-row p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
 /* ---------- Modal, toast, states ---------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(5px);
@@ -425,7 +470,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 1000px) {
-  .grid-main { grid-template-columns: 1fr; }
+  .grid-main, .receive-grid { grid-template-columns: 1fr; }
   .landing-grid, .steps { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 860px) {
@@ -444,7 +489,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .kpi-value { font-size: 30px; }
   .topbar { padding: 0 20px; }
   .vpa-chip, .user-meta { display: none; }
-  .landing-grid, .steps, .preview-grid { grid-template-columns: 1fr; }
+  .landing-grid, .steps, .preview-grid, .receive-steps { grid-template-columns: 1fr; }
   .landing-actions .btn { font-size: 14px; padding: 10px 14px; }
   .auth-card { padding: 30px 24px; }
 }

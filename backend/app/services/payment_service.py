@@ -129,15 +129,21 @@ def qr_payload(user: Dict[str, Any], amount_paise: Optional[int] = None, note: O
 
 def qr_payload_to_svg(payload: str) -> str:
     """Render a high-contrast QR as inline SVG (backend-generated, injected by UI)."""
+    import html
+    import re
+
     image = qrcode.make(payload, image_factory=SvgPathImage, box_size=8, border=2)
     buffer = io.BytesIO()
     image.save(buffer)
     svg = buffer.getvalue().decode("utf-8")
-    # Embed the raw payload so uploaded SVG scans can be decoded by the UI.
-    desc = f"<desc>{__import__('html').escape(payload)}</desc>"
-    if "<svg" in svg:
-        end = svg.index(">") + 1
-        svg = svg[:end] + desc + svg[end:]
+    # The library emits an XML declaration first; strip it so the markup can be
+    # injected inline into the HTML page without creating stray text nodes.
+    svg = re.sub(r"^\s*<\?xml[^>]*\?>\s*", "", svg)
+    # Embed the raw payload INSIDE the <svg> root so uploaded SVG scans can be decoded.
+    desc = f"<desc>{html.escape(payload)}</desc>"
+    opening = re.search(r"<svg[^>]*>", svg)
+    if opening:
+        svg = svg[:opening.end()] + desc + svg[opening.end():]
     return svg
 
 

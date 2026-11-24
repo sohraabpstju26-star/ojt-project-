@@ -37,7 +37,7 @@
     overview: ['Overview', 'Your financial command centre'],
     payments: ['Payment Hub', 'Every way to move money, in one place'],
     send: ['Send Money', 'Transfer instantly using VPA, phone or saved contact'],
-    receive: ['Receive Money', 'Your VPA, dynamic QR and copyable payment links'],
+    receive: ['Receive Money', 'Your VPA, QR and payment links'],
     scan: ['Scan & Pay', 'Simulated QR checkout at verified merchants'],
     requests: ['Payment Requests', 'Collect money with explicit payer approval'],
     beneficiaries: ['Beneficiaries', 'Saved contacts and favourites'],
@@ -340,25 +340,56 @@
   // Receive money
   // -------------------------------------------------------------------------
   PF.views.receive = async function (view) {
-    view.innerHTML = PF.sectionHead('Receive Money', 'Share your VPA or a dynamic amount QR') +
-      '<div class="grid grid-main">' +
-        '<div class="card"><div class="card-head"><div class="card-title">Your Payment QR</div>' +
-          '<span class="badge blue">UPI-STYLE</span></div>' +
-          '<div id="qr-area" class="qr-box"><div class="muted">Generating…</div></div>' +
+    let lastQr = null;
+    const vpa = state.user.vpa;
+    view.innerHTML = PF.sectionHead('Receive Money', 'Share your QR, VPA or payment link') +
+      '<div class="receive-grid">' +
+        '<div class="card qr-card">' +
+          '<div class="card-head"><div><div class="card-title">Your payment QR</div>' +
+            '<div class="card-sub">Scan with a PAYFLOW app to pay you instantly</div></div>' +
+            '<span class="badge blue">UPI-STYLE</span></div>' +
+          '<div class="qr-stage"><div class="qr-glow"></div>' +
+            '<div class="qr-frame" id="qr-area"><div class="muted">Generating…</div></div></div>' +
+          '<div class="qr-identity"><div class="qr-name">' + PF.esc(state.user.full_name) + '</div>' +
+            '<div class="mono">' + PF.esc(vpa) + '</div></div>' +
+          '<div class="qr-actions">' +
+            '<button class="btn btn-sm" id="copy-raw">Copy payload</button>' +
+            '<button class="btn btn-sm" id="download-qr">Download QR</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="card">' +
+          '<div class="card-head"><div><div class="card-title">Create a QR</div>' +
+            '<div class="card-sub">Add an amount and note to generate a dynamic QR</div></div></div>' +
+          '<div class="vpa-display"><span>Your VPA</span><b>' + PF.esc(vpa) + '</b>' +
+            '<button class="btn btn-sm" id="copy-vpa">Copy</button></div>' +
+          '<div class="field"><label>Quick amount</label><div class="chip-row">' +
+            [100, 250, 500, 1000].map(function (n) {
+              return '<button type="button" class="chip" data-amount="' + n + '">₹' + n + '</button>';
+            }).join('') +
+            '<button type="button" class="chip" data-amount="clear">Clear</button>' +
+          '</div></div>' +
           '<div class="form-row mt-2">' +
             '<div class="field"><label>Amount (INR, optional)</label><div class="input-prefix"><span>₹</span>' +
               '<input id="qr-amount" type="number" min="1" step="0.01" placeholder="Leave blank for static QR"></div></div>' +
             '<div class="field"><label>Note (optional)</label><input id="qr-note" placeholder="Invoice #123"></div>' +
           '</div>' +
-          '<button class="btn btn-primary mt-2" id="qr-generate">Generate Dynamic QR</button>' +
+          '<button class="btn btn-primary btn-block mt-2" id="qr-generate">Generate Dynamic QR</button>' +
+          '<div id="qr-status" class="receive-status">Static QR ready — share it anywhere.</div>' +
         '</div>' +
-        '<div class="card"><div class="card-title">Your Virtual Address</div>' +
-          '<div class="kpi-value blue mt-2" style="font-size:16px">' + PF.esc(state.user.vpa) + '</div>' +
-          '<div class="card-sub mt-1">Share this VPA to receive money into your primary wallet.</div>' +
-          '<div class="field mt-3"><label>Simulated payment link</label>' +
-            '<div class="copy-row"><input id="qr-link" readonly><button class="btn btn-sm" id="copy-link">Copy</button></div></div>' +
-          '<div class="field mt-2"><label>Raw payload</label>' +
-            '<div class="copy-row"><input id="qr-raw" readonly><button class="btn btn-sm" id="copy-raw">Copy</button></div></div>' +
+      '</div>' +
+
+      '<div class="card mt-2">' +
+        '<div class="card-head"><div><div class="card-title">Payment links</div>' +
+          '<div class="card-sub">Copy a link or the raw PAYFLOW payload</div></div></div>' +
+        '<div class="field"><label>Simulated payment link</label>' +
+          '<div class="copy-row"><input id="qr-link" readonly><button class="btn btn-sm" id="copy-link">Copy</button></div></div>' +
+        '<div class="field mt-2"><label>Raw payload</label>' +
+          '<div class="copy-row"><input id="qr-raw" readonly><button class="btn btn-sm" id="copy-payload">Copy</button></div></div>' +
+        '<div class="receive-steps">' +
+          '<div class="step-row"><b>01 · Share</b><p>Send your QR, VPA or payment link to the person paying you.</p></div>' +
+          '<div class="step-row"><b>02 · Pay</b><p>They scan or paste the payload and confirm the payment in their app.</p></div>' +
+          '<div class="step-row"><b>03 · Receive</b><p>The amount is credited to your wallet as a balanced ledger entry.</p></div>' +
         '</div>' +
       '</div>';
 
@@ -370,14 +401,43 @@
       if (note) url += 'note=' + encodeURIComponent(note);
       try {
         const data = await PF.api(url);
+        lastQr = data;
         view.querySelector('#qr-area').innerHTML = data.svg;
         view.querySelector('#qr-link').value = 'https://payflow.local/pay?' + data.payload.split('?')[1];
         view.querySelector('#qr-raw').value = data.payload;
+        view.querySelector('#qr-status').textContent = amount
+          ? 'Dynamic QR ready for ' + PF.inr(PF.toPaise(amount)) + '.'
+          : 'Static QR ready — share it anywhere.';
+        view.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('active'); });
+        if (amount) {
+          const chip = Array.from(view.querySelectorAll('.chip')).find(function (c) {
+            return c.dataset.amount === String(Math.round(PF.toPaise(amount) / 100));
+          });
+          if (chip) chip.classList.add('active');
+        }
       } catch (err) { PF.showError(err); }
     }
     view.querySelector('#qr-generate').onclick = loadQr;
+    view.querySelectorAll('.chip').forEach(function (chip) {
+      chip.onclick = function () {
+        view.querySelector('#qr-amount').value = chip.dataset.amount === 'clear' ? '' : chip.dataset.amount;
+        loadQr();
+      };
+    });
+    view.querySelector('#copy-vpa').onclick = function () { PF.copy(vpa); };
     view.querySelector('#copy-link').onclick = function () { PF.copy(view.querySelector('#qr-link').value); };
+    view.querySelector('#copy-payload').onclick = function () { PF.copy(view.querySelector('#qr-raw').value); };
     view.querySelector('#copy-raw').onclick = function () { PF.copy(view.querySelector('#qr-raw').value); };
+    view.querySelector('#download-qr').onclick = function () {
+      if (!lastQr) return;
+      const blob = new Blob([lastQr.svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'payflow-qr-' + vpa.replace(/[^a-z0-9]/gi, '-') + '.svg';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      PF.toast('QR code downloaded', 'ok');
+    };
     loadQr();
   };
 
