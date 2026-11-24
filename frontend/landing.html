@@ -3,19 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PAYFLOW — Unified Payments & Ledger</title>
-  <meta name="description" content="PAYFLOW is a simulated digital payments platform with an immutable double-entry ledger, VPA transfers, QR checkout and reconciliation.">
+  <title>PAYFLOW — Move money fast. Keep the books honest.</title>
+  <meta name="description" content="PAYFLOW is a simulated digital payments platform with an immutable, double-entry ledger, VPA transfers, QR checkout, reconciliation and role-based access.">
   <link rel="stylesheet" href="/css/variables.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/landing.css">
 </head>
 <body class="landing-body">
+  <div class="landing-grid-bg" aria-hidden="true"></div>
+
   <nav class="landing-nav">
     <div class="brand">
       <div class="brand-mark">P</div>
       <div class="brand-name">PAY<span>FLOW</span></div>
     </div>
-    <div class="landing-links">
-      <a href="#features">Platform</a>
+    <div class="landing-links" id="landing-links">
+      <a href="#platform">Platform</a>
       <a href="#ledger">Ledger</a>
       <a href="#security">Security</a>
       <a href="#how">How it works</a>
@@ -23,128 +26,202 @@
     <div class="landing-actions">
       <a class="btn btn-sm" href="/login.html">Log in</a>
       <a class="btn btn-sm btn-primary" href="/register.html">Get Started</a>
+      <button class="landing-menu" id="landing-menu" aria-label="Open menu">☰</button>
     </div>
   </nav>
 
-  <header class="landing-container hero">
-    <div class="eyebrow">Simulated payments infrastructure</div>
-    <h1>Every payment.<br><span>One honest ledger.</span></h1>
-    <p>PAYFLOW brings peer-to-peer transfers, QR checkout, collect requests and utility payments into one place — backed by an immutable, double-entry financial ledger that always balances.</p>
-    <div class="hero-cta">
-      <a class="btn btn-primary" href="/register.html">Get Started →</a>
-      <a class="btn" href="/login.html">Log in to Dashboard</a>
+  <header class="landing-container hero hero-split">
+    <div class="hero-copy">
+      <div class="eyebrow">SIMULATED PAYMENTS INFRASTRUCTURE</div>
+      <h1>Move money fast.<br><span>Keep the books honest.</span></h1>
+      <p>PAYFLOW turns payments into a clean, auditable story. Send by VPA, collect with approval, scan a QR, pay a bill — and every rupee lands in an immutable double-entry ledger that always balances.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/register.html">Start for free →</a>
+        <a class="btn" href="/login.html">Explore the dashboard</a>
+      </div>
+      <div class="hero-points">
+        <span>✓ Integer-paise precision</span>
+        <span>✓ Append-only journal</span>
+        <span>✓ Zero-sum trial balance</span>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="orb"></div>
+      <div class="app-mock">
+        <div class="mock-top">
+          <span class="mock-dots"><i></i><i></i><i></i></span>
+          <span class="mock-url">app.payflow.local / overview</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-side">
+            <div class="mock-brand">P</div>
+            <span class="mock-nav active"></span>
+            <span class="mock-nav"></span>
+            <span class="mock-nav"></span>
+            <span class="mock-nav"></span>
+            <span class="mock-nav"></span>
+          </div>
+          <div class="mock-main">
+            <div class="mock-kicker">OVERVIEW</div>
+            <div class="mock-kpis">
+              <div><small>BALANCE</small><i class="bar bar-lg"></i></div>
+              <div><small>INFLOW</small><i class="bar bar-md"></i></div>
+              <div><small>OUTFLOW</small><i class="bar bar-sm"></i></div>
+            </div>
+            <div class="mock-chart">
+              <span style="height:34%"></span><span style="height:52%"></span>
+              <span style="height:43%"></span><span style="height:68%"></span>
+              <span style="height:58%"></span><span style="height:82%"></span>
+              <span style="height:71%"></span><span style="height:94%"></span>
+            </div>
+            <div class="mock-rows">
+              <div><i></i><span></span><em></em></div>
+              <div><i></i><span></span><em></em></div>
+              <div><i></i><span></span><em></em></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="float-toast">
+        <span class="float-icon">✓</span>
+        <div><b>Payment received</b><small>Balanced entry posted</small></div>
+      </div>
+      <div class="float-badge">Σ Debits = Σ Credits</div>
     </div>
   </header>
 
-  <section class="landing-section" id="features">
+  <div class="landing-container">
+    <div class="value-strip reveal">
+      <div><span>01</span><b>Precise to the paise</b><small>No floating-point money maths</small></div>
+      <div><span>02</span><b>Append-only by design</b><small>Corrections are linked entries</small></div>
+      <div><span>03</span><b>Balances you can prove</b><small>Reconciliation on every account</small></div>
+      <div><span>04</span><b>Access with boundaries</b><small>Server-enforced roles</small></div>
+    </div>
+  </div>
+
+  <section class="landing-section" id="platform">
     <div class="landing-container">
-      <h2>A <span>complete payments workspace</span></h2>
-      <p>Designed for the way modern teams think about money: fast on the surface, rigorous underneath.</p>
-      <div class="landing-grid">
-        <div class="landing-card">
-          <div class="tile-icon">⌁</div>
-          <h3>Centralised payments</h3>
-          <p>Send money by VPA, phone number or username, manage saved beneficiaries, and handle merchant QR checkout from a single hub.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">⌗</div>
-          <h3>Double-entry ledger</h3>
-          <p>Every movement is recorded as a balanced journal entry in exact integer paise. Debits always equal credits — before anything is written.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">≡</div>
-          <h3>Transaction tracking</h3>
-          <p>Search and filter the full history, download structured receipts, and export records to CSV whenever you need them.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">◉</div>
-          <h3>Reconciliation</h3>
-          <p>Compare each account's expected balance against its cached balance and flag discrepancies instantly from the analytics view.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">▣</div>
-          <h3>VPA &amp; dynamic QR</h3>
-          <p>Get a personal <b>@payflow</b> address, generate amount-specific QR codes, and simulate Scan &amp; Pay with verified merchants.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">⚡</div>
-          <h3>Collect requests &amp; bills</h3>
-          <p>Raise pull-based payment requests that require explicit approval, and pay simulated utility bills across eight categories.</p>
-        </div>
+      <div class="section-kicker reveal">ONE PLATFORM</div>
+      <h2 class="reveal">Every payment flow,<br><span>one calm workspace.</span></h2>
+      <p class="reveal">Stop stitching together separate tools for transfers, requests and records. PAYFLOW keeps the whole journey in one place — with the ledger quietly doing the accounting underneath.</p>
+      <div class="feature-grid">
+        <article class="feature-card reveal">
+          <div class="tile-icon">⌁</div><h3>Send &amp; receive</h3>
+          <p>Pay any VPA, phone number or saved beneficiary. Watch both wallets move in one balanced posting.</p>
+          <span class="feature-tag">P2P</span>
+        </article>
+        <article class="feature-card reveal">
+          <div class="tile-icon">▣</div><h3>QR checkout</h3>
+          <p>Generate static or amount-specific QR codes, then simulate Scan &amp; Pay at verified merchants.</p>
+          <span class="feature-tag">QR</span>
+        </article>
+        <article class="feature-card reveal">
+          <div class="tile-icon">⇄</div><h3>Collect requests</h3>
+          <p>Ask for money with a clear note. Nothing moves until the payer reviews and explicitly approves.</p>
+          <span class="feature-tag">COLLECT</span>
+        </article>
+        <article class="feature-card reveal">
+          <div class="tile-icon">⚡</div><h3>Bills &amp; recharges</h3>
+          <p>Eight simulated biller categories, from mobile recharges to utility payments, with instant receipts.</p>
+          <span class="feature-tag">BILLS</span>
+        </article>
+        <article class="feature-card reveal">
+          <div class="tile-icon">≡</div><h3>Transaction history</h3>
+          <p>Filter every entry, download structured receipts and export your records as CSV in one click.</p>
+          <span class="feature-tag">RECORDS</span>
+        </article>
+        <article class="feature-card reveal">
+          <div class="tile-icon">▥</div><h3>Live analytics</h3>
+          <p>Cash-flow trends, spending breakdowns and account reconciliation computed from the journal itself.</p>
+          <span class="feature-tag">INSIGHT</span>
+        </article>
       </div>
     </div>
   </section>
 
-  <section class="landing-section" id="ledger">
+  <section class="landing-section flow-section" id="ledger">
     <div class="landing-container">
-      <h2>Built on a <span>ledger that never forgets</span></h2>
-      <p>PAYFLOW treats the journal as the single source of truth. Entries are append-only: corrections are new, balanced reversal or refund entries that reference the original transaction.</p>
-      <div class="preview">
-        <div class="preview-bar"><i></i><i></i><i></i></div>
-        <div class="preview-grid">
-          <div class="preview-tile"><span>Journal</span><b>Append-only</b></div>
-          <div class="preview-tile"><span>Precision</span><b>Integer paise</b></div>
-          <div class="preview-tile"><span>Trial balance</span><b>Zero difference</b></div>
-          <div class="preview-tile"><span>Debits</span><b>Equal credits</b></div>
-          <div class="preview-tile"><span>Wallet floor</span><b>No overdraft</b></div>
-          <div class="preview-tile"><span>Corrections</span><b>Linked entries</b></div>
-        </div>
+      <div class="section-kicker reveal">UNDER THE HOOD</div>
+      <h2 class="reveal">A payment becomes<br><span>a permanent record.</span></h2>
+      <p class="reveal">Behind the simple interface, every action is validated before it is written — and nothing is ever quietly rewritten.</p>
+      <div class="flow-track reveal">
+        <div class="flow-node"><b>01</b><span>Initiate</span><small>VPA, QR or request</small></div>
+        <div class="flow-node"><b>02</b><span>Validate</span><small>Funds, limits, roles</small></div>
+        <div class="flow-node"><b>03</b><span>Post</span><small>Balanced journal lines</small></div>
+        <div class="flow-node"><b>04</b><span>Reconcile</span><small>Balances + receipts</small></div>
+      </div>
+      <div class="equation reveal">
+        <div class="equation-side"><small>TOTAL DEBITS</small><b>Σ</b></div>
+        <div class="equation-sign">=</div>
+        <div class="equation-side"><small>TOTAL CREDITS</small><b>Σ</b></div>
+        <div class="equation-note">Checked before every write.<br>Always zero difference.</div>
+      </div>
+      <div class="recon-preview reveal">
+        <div class="recon-head"><span>ACCOUNT</span><span>DEBIT</span><span>CREDIT</span><span>STATUS</span></div>
+        <div><span>Customer wallet</span><span>—</span><span>payment</span><span class="mini-badge ok">BALANCED</span></div>
+        <div><span>Merchant settlement</span><span>payment</span><span>—</span><span class="mini-badge ok">BALANCED</span></div>
+        <div><span>Platform fees</span><span>fee</span><span>—</span><span class="mini-badge ok">BALANCED</span></div>
       </div>
     </div>
   </section>
 
   <section class="landing-section" id="security">
-    <div class="landing-container">
-      <h2>Security at the <span>core</span></h2>
-      <p>Identity and access are enforced on the server for every request — not just hidden in the interface.</p>
-      <div class="landing-grid">
-        <div class="landing-card">
-          <div class="tile-icon">⛨</div>
-          <h3>Protected accounts</h3>
-          <p>Passwords are hashed with Argon2id. Optional TOTP multi-factor authentication adds a second step, with single-use recovery codes.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">◷</div>
-          <h3>Session control</h3>
-          <p>Sessions are stored server-side as token digests, expire automatically, and can be reviewed and revoked from the Security Centre.</p>
-        </div>
-        <div class="landing-card">
-          <div class="tile-icon">▦</div>
-          <h3>Role-based access</h3>
-          <p>Customers, merchants, operators, auditors and administrators see only the capabilities their role permits.</p>
-        </div>
+    <div class="landing-container security-split">
+      <div class="security-copy reveal">
+        <div class="section-kicker">SECURITY</div>
+        <h2>Quietly strict<br><span>where it matters.</span></h2>
+        <p>Every endpoint checks the session and the role on the server. Hiding a button in the interface is never the security boundary.</p>
+        <ul class="security-list">
+          <li><span>✓</span><div><b>Argon2id password hashing</b><small>Memory-hard hashes, unique salt per account</small></div></li>
+          <li><span>✓</span><div><b>Optional TOTP MFA</b><small>Encrypted secrets and single-use recovery codes</small></div></li>
+          <li><span>✓</span><div><b>Server-side sessions</b><small>Hashed tokens you can review and revoke</small></div></li>
+          <li><span>✓</span><div><b>Five roles, real boundaries</b><small>Customer, Merchant, Operator, Auditor, Admin</small></div></li>
+        </ul>
       </div>
+      <div class="security-visual reveal">
+        <div class="shield">⛨</div>
+        <div class="shield-ring ring-one"></div>
+        <div class="shield-ring ring-two"></div>
+        <div class="shield-note">RBAC · MFA · AUDIT TRAIL</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-container">
+    <div class="status-band reveal">
+      <div class="status-pulse"><i></i></div>
+      <div>
+        <b id="live-title">Checking system status…</b>
+        <small id="live-detail">Reading the live ledger health endpoint.</small>
+      </div>
+      <a class="btn btn-sm" href="/docs">View API docs</a>
     </div>
   </section>
 
   <section class="landing-section" id="how">
     <div class="landing-container">
-      <h2>How it <span>works</span></h2>
-      <p>Three steps from a fresh wallet to a fully recorded transaction.</p>
+      <div class="section-kicker reveal">GETTING STARTED</div>
+      <h2 class="reveal">From zero to settled<br><span>in three steps.</span></h2>
       <div class="steps">
-        <div class="step">
-          <h3>Create your account</h3>
-          <p>Register as a customer or merchant. A primary wallet and its ledger account are provisioned automatically.</p>
-        </div>
-        <div class="step">
-          <h3>Move money</h3>
-          <p>Send to a VPA, scan a merchant QR, approve a collect request, or pay a simulated utility bill.</p>
-        </div>
-        <div class="step">
-          <h3>Verify the books</h3>
-          <p>Review receipts, charts and reconciliation reports computed directly from the immutable journal.</p>
-        </div>
+        <div class="step reveal"><h3>Create your account</h3><p>Register as a customer or merchant. A wallet and its ledger account are provisioned together.</p></div>
+        <div class="step reveal"><h3>Move money</h3><p>Send to a VPA, scan a merchant QR, approve a collect request or pay a simulated bill.</p></div>
+        <div class="step reveal"><h3>See the whole picture</h3><p>Review receipts, charts and reconciliation built directly from the immutable journal.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="landing-section">
-    <div class="landing-container" style="text-align:center">
-      <h2>Ready to <span>explore</span>?</h2>
-      <p>Open the simulated environment and see a real double-entry ledger in motion.</p>
-      <div class="hero-cta">
-        <a class="btn btn-primary" href="/register.html">Create an account →</a>
-        <a class="btn" href="/login.html">I already have one</a>
+  <section class="cta-section">
+    <div class="landing-container">
+      <div class="cta-panel reveal">
+        <div class="cta-glow"></div>
+        <div class="section-kicker">READY WHEN YOU ARE</div>
+        <h2>See what a ledger<br><span>that always balances</span> feels like.</h2>
+        <p>Create an account and make your first simulated payment in minutes. No real money, no real credentials — just a clean payments workspace.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="/register.html">Create your account →</a>
+          <a class="btn" href="/login.html">I already have one</a>
+        </div>
       </div>
     </div>
   </section>
@@ -157,5 +234,44 @@
       <a href="/docs">API docs</a>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      document.body.classList.add('js-ready');
+      // Mobile navigation
+      const menu = document.getElementById('landing-menu');
+      const links = document.getElementById('landing-links');
+      if (menu && links) menu.onclick = function () { links.classList.toggle('open'); };
+
+      // Live, real system status from the public health endpoint
+      const title = document.getElementById('live-title');
+      const detail = document.getElementById('live-detail');
+      fetch('/api/health').then(function (r) { return r.json(); }).then(function (h) {
+        if (h.status === 'OK' && h.ledger_balanced) {
+          title.textContent = 'System operational · ledger balanced';
+          detail.textContent = 'Live check: trial balance difference is ' + h.difference_paise + ' paise.';
+        } else {
+          title.textContent = 'Ledger integrity warning';
+          detail.textContent = 'Live check reported a non-zero trial balance difference.';
+        }
+      }).catch(function () {
+        title.textContent = 'Status unavailable';
+        detail.textContent = 'The health endpoint could not be reached.';
+      });
+
+      // Subtle scroll reveal (content stays visible if JS is unavailable)
+      const items = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+          });
+        }, { threshold: 0.12 });
+        items.forEach(function (el) { observer.observe(el); });
+      } else {
+        items.forEach(function (el) { el.classList.add('visible'); });
+      }
+    })();
+  </script>
 </body>
 </html>
