@@ -100,6 +100,8 @@
       '</form></div><div class="card" id="tx-table"><div class="empty">Loading…</div></div>';
 
     let rows = [];
+    let page = 1;
+    const perPage = 12;
     async function load() {
       const params = new URLSearchParams();
       const cat = view.querySelector('#f-cat').value;
@@ -109,9 +111,24 @@
       if (start) params.set('start_date', start);
       if (end) params.set('end_date', end);
       rows = await PF.api('/transactions?' + params.toString());
+      page = 1;
+      renderRows();
+    }
+    function renderRows() {
+      const pages = Math.max(1, Math.ceil(rows.length / perPage));
+      if (page > pages) page = pages;
+      const visible = rows.slice((page - 1) * perPage, page * perPage);
+      const controls = '<div class="flex between items-center mt-2" style="flex-wrap:wrap;gap:12px">' +
+        '<span class="muted text-sm">Showing ' + (visible.length ? ((page - 1) * perPage + 1) : 0) + '–' +
+          Math.min(page * perPage, rows.length) + ' of ' + rows.length + '</span>' +
+        '<div class="flex gap-1">' +
+          '<button class="btn btn-sm" id="tx-prev"' + (page <= 1 ? ' disabled' : '') + '>← Previous</button>' +
+          '<span class="badge grey">Page ' + page + ' of ' + pages + '</span>' +
+          '<button class="btn btn-sm" id="tx-next"' + (page >= pages ? ' disabled' : '') + '>Next →</button>' +
+        '</div></div>';
       view.querySelector('#tx-table').innerHTML = PF.table(
         ['TXN ID', 'Date', 'Description', 'Category', 'Counterparty', 'Type', 'Amount', 'Status', 'Receipt'],
-        rows.map(function (t) {
+        visible.map(function (t) {
           const credit = t.direction === 'CREDIT';
           return '<tr><td class="mono">' + PF.esc(t.transaction_id) + '</td>' +
             '<td class="nowrap muted text-xs">' + PF.esc(PF.fmtDate(t.timestamp)) + '</td>' +
@@ -123,10 +140,14 @@
             '<td>' + PF.badge(t.status, t.status === 'COMPLETED' ? 'green' : 'amber') + '</td>' +
             '<td><button class="btn btn-sm" data-receipt="' + PF.esc(t.transaction_id) + '">View</button></td></tr>';
         }), 'No transactions match these filters.'
-      );
+      ) + controls;
       view.querySelectorAll('[data-receipt]').forEach(function (b) {
         b.onclick = function () { PF.downloadReceipt(b.dataset.receipt); };
       });
+      const prev = view.querySelector('#tx-prev');
+      const next = view.querySelector('#tx-next');
+      if (prev) prev.onclick = function () { if (page > 1) { page -= 1; renderRows(); } };
+      if (next) next.onclick = function () { if (page < pages) { page += 1; renderRows(); } };
     }
     view.querySelector('#tx-filter').onsubmit = async function (e) { e.preventDefault(); await load(); };
     view.querySelector('#csv-export').onclick = function () {

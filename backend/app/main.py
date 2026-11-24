@@ -62,10 +62,16 @@ if (FRONTEND / "js").exists():
 
 
 @app.get("/", include_in_schema=False)
-def index():
-    return FileResponse(str(FRONTEND / "index.html"))
+def landing():
+    return FileResponse(str(FRONTEND / "landing.html"))
 
 
+@app.get("/landing.html", include_in_schema=False)
+def landing_page():
+    return FileResponse(str(FRONTEND / "landing.html"))
+
+
+@app.get("/app", include_in_schema=False)
 @app.get("/index.html", include_in_schema=False)
 def index_html():
     return FileResponse(str(FRONTEND / "index.html"))

@@ -307,7 +307,7 @@ def receipt_html(receipt: Dict[str, Any]) -> str:
     return f"""<!doctype html><html><head><meta charset='utf-8'><title>PAYFLOW Receipt</title>
 <style>body{{font-family:Inter,Arial,sans-serif;background:#000000;color:#f8fafc;padding:32px}}
 .card{{background:#101114;border:1px solid #23252b;border-radius:14px;padding:28px;max-width:640px;margin:auto}}
-h1{{color:#3b82f6}} table{{width:100%;border-collapse:collapse;margin-top:16px}}
+h1{{color:#ff7900}} table{{width:100%;border-collapse:collapse;margin-top:16px}}
 td,th{{padding:8px;border-bottom:1px solid #23252b;text-align:left;font-size:13px}}
 .ok{{color:#10b981}}</style></head><body><div class='card'>
 <h1>PAYFLOW · Digital Receipt</h1><p class='ok'>● {receipt['status']}</p>

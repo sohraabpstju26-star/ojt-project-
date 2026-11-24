@@ -77,12 +77,15 @@
           '<div class="brand"><div class="brand-mark">P</div><div class="brand-name">PAY<span>FLOW</span></div></div>' +
           '<nav class="nav-scroll">' + nav + '</nav>' +
           '<div class="sidebar-footer">' +
+            '<div class="avatar">' + PF.esc(initials) + '</div>' +
+            '<div class="profile-meta"><b>' + PF.esc(state.user.full_name) + '</b><small>' + PF.esc(state.user.role) + ' · Simulated</small></div>' +
             '<button class="collapse-btn" id="collapse-btn" title="Collapse sidebar">☰</button>' +
-            '<span class="sidebar-footer-text">SIMULATED ENVIRONMENT<br>v1.0 · Integer Paise</span>' +
           '</div>' +
         '</aside>' +
+        '<div class="overlay" id="nav-overlay"></div>' +
         '<div class="main">' +
           '<header class="topbar">' +
+            '<button class="mobile-menu" id="mobile-menu" title="Open menu">☰</button>' +
             '<div><div class="page-title" id="page-title">Overview</div><div class="page-subtitle" id="page-subtitle"></div></div>' +
             '<div class="topbar-right">' +
               '<span class="vpa-chip" id="top-vpa">' + PF.esc(state.user.vpa) + '</span>' +
@@ -96,15 +99,28 @@
       '</div>' +
       '<div class="toast-stack" id="toast-stack"></div>';
 
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('nav-overlay');
+    function closeMobile() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
     document.getElementById('collapse-btn').onclick = function () {
-      document.getElementById('sidebar').classList.toggle('collapsed');
+      if (window.innerWidth <= 860) {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show', sidebar.classList.contains('open'));
+      } else {
+        sidebar.classList.toggle('collapsed');
+      }
     };
+    document.getElementById('mobile-menu').onclick = function () {
+      sidebar.classList.add('open');
+      overlay.classList.add('show');
+    };
+    overlay.onclick = closeMobile;
     document.getElementById('logout-btn').onclick = async function () {
       await PF.api('/auth/logout', { method: 'POST' });
       location.href = '/login.html';
     };
     document.querySelectorAll('[data-nav]').forEach(function (node) {
-      node.onclick = function () { location.hash = '#/' + node.dataset.nav; };
+      node.onclick = function () { closeMobile(); location.hash = '#/' + node.dataset.nav; };
     });
   };
 
@@ -123,7 +139,7 @@
     if (!TITLES[id]) id = 'overview';
     PF.setSection(id);
     const view = document.getElementById('view');
-    view.innerHTML = '<div class="empty"><span class="spinner"></span> Loading…</div>';
+    view.innerHTML = '<div class="grid grid-4"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div><div class="card skeleton mt-2" style="min-height:260px"></div>';
     try {
       if (PF.views[id]) await PF.views[id](view);
       else view.innerHTML = '<div class="empty">This view is not available for your role.</div>';
@@ -142,10 +158,12 @@
   // Overview
   // -------------------------------------------------------------------------
   PF.views.overview = async function (view) {
-    const [dash, cashflow, categories] = await Promise.all([
+    const [dash, cashflow, categories, status, recon] = await Promise.all([
       PF.api('/analytics/dashboard'),
       PF.api('/analytics/chart/cashflow?months=6'),
       PF.api('/analytics/chart/categories'),
+      PF.api('/analytics/chart/status'),
+      PF.api('/analytics/reconciliation'),
     ]);
     const kpi = function (label, value, tone, foot) {
       return '<div class="kpi"><div class="kpi-label">' + label + '</div>' +
@@ -161,13 +179,22 @@
         '<td class="align-right ' + (credit ? 'success' : 'danger') + '">' + (credit ? '+' : '−') + PF.inr(t.amount_paise) + '</td>' +
         '<td class="muted text-xs nowrap">' + PF.esc(PF.fmtDate(t.timestamp)) + '</td></tr>';
     });
+    const s = status.summary || {};
 
     view.innerHTML =
+      PF.sectionHead('Financial overview', 'Live figures computed from the immutable ledger') +
       '<div class="grid grid-4 mb-2">' +
         kpi('Total Balance', PF.inr(dash.total_balance_paise), 'blue', dash.wallet_count + ' active wallet(s)') +
-        kpi('Money In', PF.inr(dash.inflow_paise), 'green', 'Lifetime credits') +
-        kpi('Money Out', PF.inr(dash.outflow_paise), 'red', 'Lifetime debits') +
-        kpi('This Month', PF.inr(dash.monthly_spend_paise), '', dash.transaction_count + ' transactions') +
+        kpi('Total Credits', PF.inr(dash.inflow_paise), 'green', 'Money received') +
+        kpi('Total Debits', PF.inr(dash.outflow_paise), 'red', 'Money spent') +
+        kpi('Transactions', String(dash.transaction_count), '', 'Journal entries recorded') +
+      '</div>' +
+      '<div class="grid grid-4 mb-2">' +
+        kpi('Successful Payments', String(s.completed || 0), 'green', 'Completed entries') +
+        kpi('Pending', String(s.pending || 0), '', 'Awaiting approval') +
+        kpi('Failed / Rejected', String(s.rejected || 0), 'red', 'Declined or cancelled') +
+        kpi('Reconciliation', recon.all_balanced ? 'Balanced' : (recon.discrepancies + ' issues'),
+            recon.all_balanced ? 'green' : 'red', 'Cached vs expected balances') +
       '</div>' +
       '<div class="grid grid-2 mb-2">' +
         '<div class="card"><div class="card-head"><div><div class="card-title">Cash Flow Trend</div>' +
@@ -185,7 +212,7 @@
           PF.table(['TXN ID', 'Description', 'Counterparty', 'Category', 'Amount', 'Time'], recent, 'No transactions yet.') +
         '</div>' +
         '<div class="card"><div class="card-head"><div class="card-title">Quick Actions</div></div>' +
-          '<div class="grid" style="gap:10px">' +
+          '<div class="grid" style="gap:12px">' +
             '<button class="btn btn-primary btn-block" data-goto="send">➤ Send Money</button>' +
             '<button class="btn btn-block" data-goto="receive">⇩ Receive / QR</button>' +
             '<button class="btn btn-block" data-goto="scan">▣ Scan & Pay</button>' +
@@ -316,7 +343,7 @@
     view.innerHTML = PF.sectionHead('Receive Money', 'Share your VPA or a dynamic amount QR') +
       '<div class="grid grid-main">' +
         '<div class="card"><div class="card-head"><div class="card-title">Your Payment QR</div>' +
-          '<span class="badge purple">UPI-STYLE</span></div>' +
+          '<span class="badge blue">UPI-STYLE</span></div>' +
           '<div id="qr-area" class="qr-box"><div class="muted">Generating…</div></div>' +
           '<div class="form-row mt-2">' +
             '<div class="field"><label>Amount (INR, optional)</label><div class="input-prefix"><span>₹</span>' +
@@ -368,7 +395,7 @@
 
     view.innerHTML = PF.sectionHead('Scan & Pay', 'Upload a generated QR SVG, paste a payload, or pick a verified merchant') +
       '<div class="grid grid-main">' +
-        '<div class="card"><div class="card-head"><div class="card-title">QR Payload</div><span class="badge purple">SIMULATOR</span></div>' +
+        '<div class="card"><div class="card-head"><div class="card-title">QR Payload</div><span class="badge blue">SIMULATOR</span></div>' +
           '<div class="field"><label>Paste payflow://pay payload</label>' +
             '<textarea id="scan-payload" placeholder="payflow://pay?pa=starbucks@payflow&pn=...&am=150.00&cu=INR"></textarea></div>' +
           '<div class="field mt-2"><label>Or upload a PAYFLOW QR image / SVG</label>' +

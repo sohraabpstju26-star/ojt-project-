@@ -105,36 +105,50 @@
   PF.views.settings = async function (view) {
     const s = await PF.api('/settings');
     document.body.classList.toggle('theme-light', s.theme === 'light');
-    view.innerHTML = PF.sectionHead('Settings', 'Profile and preferences stored per user') +
-      '<div class="grid grid-2">' +
-        '<div class="card"><div class="card-title">Profile</div>' +
-          '<div class="mt-2 text-sm secondary" style="line-height:2">' +
+    view.innerHTML = PF.sectionHead('Settings', 'Profile, preferences and account controls') +
+      '<form id="settings-form" class="grid grid-2">' +
+        '<div class="card"><div class="card-head"><div class="card-title">Profile</div>' + PF.badge(PF.state.user.role, 'blue') + '</div>' +
+          '<div class="text-sm secondary" style="line-height:2.1">' +
             '<div class="between"><span>Full name</span><b>' + PF.esc(PF.state.user.full_name) + '</b></div>' +
             '<div class="between"><span>Username</span><b>' + PF.esc(PF.state.user.username) + '</b></div>' +
             '<div class="between"><span>Email</span><b>' + PF.esc(PF.state.user.email) + '</b></div>' +
             '<div class="between"><span>Phone</span><b>' + PF.esc(PF.state.user.phone) + '</b></div>' +
-            '<div class="between"><span>VPA</span><b class="success mono">' + PF.esc(PF.state.user.vpa) + '</b></div>' +
-            '<div class="between"><span>Role</span><b>' + PF.esc(PF.state.user.role) + '</b></div>' +
+            '<div class="between"><span>VPA</span><b class="accent mono">' + PF.esc(PF.state.user.vpa) + '</b></div>' +
           '</div></div>' +
-        '<div class="card"><div class="card-title">Preferences</div>' +
-          '<form id="settings-form" class="form-grid mt-2">' +
+
+        '<div class="card"><div class="card-title">Appearance &amp; account</div>' +
+          '<div class="card-sub mb-2">Choose how PAYFLOW looks and set your transaction ceiling.</div>' +
+          '<div class="form-grid">' +
             '<div class="field"><label>Theme</label><select id="s-theme">' +
-              '<option value="dark"' + (s.theme === 'dark' ? ' selected' : '') + '>Obsidian Dark</option>' +
+              '<option value="dark"' + (s.theme === 'dark' ? ' selected' : '') + '>Matte Black</option>' +
               '<option value="light"' + (s.theme === 'light' ? ' selected' : '') + '>Light</option></select></div>' +
             '<div class="field"><label>Currency format</label><select id="s-currency">' +
               ['INR'].map(function (c) { return '<option' + (s.currency_format === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') +
               '</select></div>' +
             '<div class="field"><label>Daily transaction limit (INR)</label><div class="input-prefix"><span>₹</span>' +
               '<input id="s-limit" type="number" min="1000" step="1000" value="' + (s.daily_limit_paise / 100) + '"></div></div>' +
-            '<div class="field"><label class="checkline"><input type="checkbox" id="s-payments"' +
-              (s.notifications.payments ? ' checked' : '') + '> Payment notifications</label></div>' +
-            '<div class="field"><label class="checkline"><input type="checkbox" id="s-security"' +
-              (s.notifications.security ? ' checked' : '') + '> Security alerts</label></div>' +
-            '<div class="field"><label class="checkline"><input type="checkbox" id="s-balance"' +
-              (s.privacy.show_balance ? ' checked' : '') + '> Show balances on dashboard</label></div>' +
-            '<button class="btn btn-primary" type="submit">Save Preferences</button>' +
-          '</form></div>' +
-      '</div>';
+          '</div></div>' +
+
+        '<div class="card"><div class="card-title">Notifications</div>' +
+          '<div class="card-sub mb-2">Control which in-app alerts you receive.</div>' +
+          '<div class="form-grid">' +
+            '<label class="checkline"><input type="checkbox" id="s-payments"' + (s.notifications.payments ? ' checked' : '') + '> Payment notifications</label>' +
+            '<label class="checkline"><input type="checkbox" id="s-security"' + (s.notifications.security ? ' checked' : '') + '> Security alerts</label>' +
+          '</div></div>' +
+
+        '<div class="card"><div class="card-title">Privacy</div>' +
+          '<div class="card-sub mb-2">Decide what other users can see.</div>' +
+          '<label class="checkline"><input type="checkbox" id="s-balance"' + (s.privacy.show_balance ? ' checked' : '') + '> Show balances on dashboard</label>' +
+        '</div>' +
+
+        '<div class="card"><div class="card-title">Security settings</div>' +
+          '<div class="card-sub mb-2">Password, MFA and active sessions are managed in the Security Centre.</div>' +
+          '<button type="button" class="btn" data-goto="security">⛨ Open Security Centre →</button>' +
+        '</div>' +
+
+        '<div class="card flex items-center"><button class="btn btn-primary btn-block" type="submit">Save Preferences</button></div>' +
+      '</form>';
+    PF.bindGoto(view);
     view.querySelector('#settings-form').onsubmit = async function (e) {
       e.preventDefault();
       const theme = view.querySelector('#s-theme').value;
@@ -165,7 +179,7 @@
     const rows = accounts.map(function (a) {
       return '<tr><td class="mono">' + PF.esc(a.code) + '</td><td>' + PF.esc(a.name) + '</td>' +
         '<td>' + PF.badge(a.account_type, a.account_type === 'Asset' ? 'blue' :
-          a.account_type === 'Liability' ? 'purple' : a.account_type === 'Income' ? 'green' : 'amber') + '</td>' +
+          a.account_type === 'Liability' ? 'blue' : a.account_type === 'Income' ? 'green' : 'amber') + '</td>' +
         '<td>' + PF.esc(a.role) + '</td>' +
         '<td class="align-right">' + PF.inr(a.balance_paise) + '</td>' +
         '<td>' + PF.badge(a.active ? 'ACTIVE' : 'FROZEN', a.active ? 'green' : 'red') + '</td>' +

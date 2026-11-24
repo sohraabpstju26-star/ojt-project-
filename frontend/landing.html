@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAYFLOW — Unified Payments & Ledger</title>
+  <meta name="description" content="PAYFLOW is a simulated digital payments platform with an immutable double-entry ledger, VPA transfers, QR checkout and reconciliation.">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="landing-body">
+  <nav class="landing-nav">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div class="brand-name">PAY<span>FLOW</span></div>
+    </div>
+    <div class="landing-links">
+      <a href="#features">Platform</a>
+      <a href="#ledger">Ledger</a>
+      <a href="#security">Security</a>
+      <a href="#how">How it works</a>
+    </div>
+    <div class="landing-actions">
+      <a class="btn btn-sm" href="/login.html">Log in</a>
+      <a class="btn btn-sm btn-primary" href="/register.html">Get Started</a>
+    </div>
+  </nav>
+
+  <header class="landing-container hero">
+    <div class="eyebrow">Simulated payments infrastructure</div>
+    <h1>Every payment.<br><span>One honest ledger.</span></h1>
+    <p>PAYFLOW brings peer-to-peer transfers, QR checkout, collect requests and utility payments into one place — backed by an immutable, double-entry financial ledger that always balances.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/register.html">Get Started →</a>
+      <a class="btn" href="/login.html">Log in to Dashboard</a>
+    </div>
+  </header>
+
+  <section class="landing-section" id="features">
+    <div class="landing-container">
+      <h2>A <span>complete payments workspace</span></h2>
+      <p>Designed for the way modern teams think about money: fast on the surface, rigorous underneath.</p>
+      <div class="landing-grid">
+        <div class="landing-card">
+          <div class="tile-icon">⌁</div>
+          <h3>Centralised payments</h3>
+          <p>Send money by VPA, phone number or username, manage saved beneficiaries, and handle merchant QR checkout from a single hub.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">⌗</div>
+          <h3>Double-entry ledger</h3>
+          <p>Every movement is recorded as a balanced journal entry in exact integer paise. Debits always equal credits — before anything is written.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">≡</div>
+          <h3>Transaction tracking</h3>
+          <p>Search and filter the full history, download structured receipts, and export records to CSV whenever you need them.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">◉</div>
+          <h3>Reconciliation</h3>
+          <p>Compare each account's expected balance against its cached balance and flag discrepancies instantly from the analytics view.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">▣</div>
+          <h3>VPA &amp; dynamic QR</h3>
+          <p>Get a personal <b>@payflow</b> address, generate amount-specific QR codes, and simulate Scan &amp; Pay with verified merchants.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">⚡</div>
+          <h3>Collect requests &amp; bills</h3>
+          <p>Raise pull-based payment requests that require explicit approval, and pay simulated utility bills across eight categories.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="ledger">
+    <div class="landing-container">
+      <h2>Built on a <span>ledger that never forgets</span></h2>
+      <p>PAYFLOW treats the journal as the single source of truth. Entries are append-only: corrections are new, balanced reversal or refund entries that reference the original transaction.</p>
+      <div class="preview">
+        <div class="preview-bar"><i></i><i></i><i></i></div>
+        <div class="preview-grid">
+          <div class="preview-tile"><span>Journal</span><b>Append-only</b></div>
+          <div class="preview-tile"><span>Precision</span><b>Integer paise</b></div>
+          <div class="preview-tile"><span>Trial balance</span><b>Zero difference</b></div>
+          <div class="preview-tile"><span>Debits</span><b>Equal credits</b></div>
+          <div class="preview-tile"><span>Wallet floor</span><b>No overdraft</b></div>
+          <div class="preview-tile"><span>Corrections</span><b>Linked entries</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="security">
+    <div class="landing-container">
+      <h2>Security at the <span>core</span></h2>
+      <p>Identity and access are enforced on the server for every request — not just hidden in the interface.</p>
+      <div class="landing-grid">
+        <div class="landing-card">
+          <div class="tile-icon">⛨</div>
+          <h3>Protected accounts</h3>
+          <p>Passwords are hashed with Argon2id. Optional TOTP multi-factor authentication adds a second step, with single-use recovery codes.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">◷</div>
+          <h3>Session control</h3>
+          <p>Sessions are stored server-side as token digests, expire automatically, and can be reviewed and revoked from the Security Centre.</p>
+        </div>
+        <div class="landing-card">
+          <div class="tile-icon">▦</div>
+          <h3>Role-based access</h3>
+          <p>Customers, merchants, operators, auditors and administrators see only the capabilities their role permits.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="how">
+    <div class="landing-container">
+      <h2>How it <span>works</span></h2>
+      <p>Three steps from a fresh wallet to a fully recorded transaction.</p>
+      <div class="steps">
+        <div class="step">
+          <h3>Create your account</h3>
+          <p>Register as a customer or merchant. A primary wallet and its ledger account are provisioned automatically.</p>
+        </div>
+        <div class="step">
+          <h3>Move money</h3>
+          <p>Send to a VPA, scan a merchant QR, approve a collect request, or pay a simulated utility bill.</p>
+        </div>
+        <div class="step">
+          <h3>Verify the books</h3>
+          <p>Review receipts, charts and reconciliation reports computed directly from the immutable journal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <div class="landing-container" style="text-align:center">
+      <h2>Ready to <span>explore</span>?</h2>
+      <p>Open the simulated environment and see a real double-entry ledger in motion.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/register.html">Create an account →</a>
+        <a class="btn" href="/login.html">I already have one</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="brand" style="border:0;padding:0"><div class="brand-mark">P</div><div class="brand-name">PAY<span>FLOW</span></div></div>
+    <div>
+      <span>Simulated environment · No real money or banking credentials.</span>
+      <a href="/login.html">Sign in</a>
+      <a href="/docs">API docs</a>
+    </div>
+  </footer>
+</body>
+</html>

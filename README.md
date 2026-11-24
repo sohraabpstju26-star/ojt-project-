@@ -31,7 +31,8 @@ Open:
 
 | URL | Purpose |
 |-----|---------|
-| `http://127.0.0.1:8000/` | Application UI |
+| `http://127.0.0.1:8000/` | Public landing page |
+| `http://127.0.0.1:8000/index.html` | Application UI |
 | `http://127.0.0.1:8000/login.html` | Sign in |
 | `http://127.0.0.1:8000/docs` | Interactive Swagger UI |
 | `http://127.0.0.1:8000/api/health` | Health probe / ledger balance |
@@ -128,6 +129,13 @@ PAYFLOW/
 For a wallet (Asset), receiving money **debits** the wallet and paying **credits** it.
 Platform fees are collected into an Asset "Fees clearing" account so `(receiver debit +
 fee debit) = sender credit`, preserving global balance.
+
+---
+
+### UI design
+The frontend uses a premium matte-black (`#080808`) and vibrant-orange (`#FF7900`) design
+system with larger typography and spacious layouts. The public landing page is at `/`,
+the application shell at `/index.html` (or `/app`), and the sign-in page at `/login.html`.
 
 ---
 

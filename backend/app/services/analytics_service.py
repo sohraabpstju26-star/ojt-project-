@@ -19,16 +19,16 @@ plt.rcParams.update({
     "figure.facecolor": "#000000",
     "axes.facecolor": "#0b0c0f",
     "axes.edgecolor": "#23252b",
-    "axes.labelcolor": "#94a3b8",
-    "xtick.color": "#94a3b8",
-    "ytick.color": "#94a3b8",
-    "text.color": "#f8fafc",
+    "axes.labelcolor": "#b0b0b0",
+    "xtick.color": "#b0b0b0",
+    "ytick.color": "#b0b0b0",
+    "text.color": "#ffffff",
     "grid.color": "#23252b",
     "font.size": 10,
     "axes.titlesize": 12,
 })
 
-CATEGORY_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899", "#84cc16"]
+CATEGORY_COLORS = ["#ff7900", "#ff9f43", "#b0b0b0", "#22c55e", "#858585", "#f59e0b", "#ef4444", "#5a5a5a"]
 
 
 def _lines_df() -> pd.DataFrame:
@@ -183,7 +183,7 @@ def categories_chart(user_id: Optional[str] = None) -> Dict[str, Any]:
 
     fig, ax = plt.subplots(figsize=(7.2, 5))
     if grouped.empty:
-        ax.text(0.5, 0.5, "No spending data available", ha="center", va="center", color="#64748b")
+        ax.text(0.5, 0.5, "No spending data available", ha="center", va="center", color="#858585")
         ax.axis("off")
     else:
         values = [int(v) / 100 for v in grouped.values]
@@ -194,12 +194,12 @@ def categories_chart(user_id: Optional[str] = None) -> Dict[str, Any]:
             pctdistance=0.78,
         )
         for t in autotexts:
-            t.set_color("#f8fafc")
+            t.set_color("#ffffff")
             t.set_fontsize(9)
         ax.legend(wedges, [str(x) for x in grouped.index], loc="center left",
                   bbox_to_anchor=(1.0, 0.5), frameon=False, fontsize=9)
         ax.text(0, 0, _inr(int(grouped.sum())), ha="center", va="center",
-                fontsize=11, color="#f8fafc", fontweight="bold")
+                fontsize=11, color="#ffffff", fontweight="bold")
     ax.set_title("Spending Distribution by Category")
     fig.tight_layout()
     return {
@@ -223,8 +223,8 @@ def velocity_chart(user_id: Optional[str] = None, days: int = 14) -> Dict[str, A
 
     fig, ax1 = plt.subplots(figsize=(9, 4))
     short = [d[5:] for d in labels]
-    ax1.bar(short, volumes, color="#3b82f6", alpha=0.75, label="Volume (INR)")
-    ax1.set_ylabel("Volume (INR)", color="#3b82f6")
+    ax1.bar(short, volumes, color="#ff7900", alpha=0.75, label="Volume (INR)")
+    ax1.set_ylabel("Volume (INR)", color="#ff7900")
     ax1.tick_params(axis="x", rotation=45)
     ax2 = ax1.twinx()
     ax2.plot(short, counts, color="#f59e0b", marker="o", linewidth=2, label="Transaction count")
@@ -250,7 +250,7 @@ def status_chart() -> Dict[str, Any]:
 
     fig, ax = plt.subplots(figsize=(6.5, 4.5))
     if sum(sizes) == 0:
-        ax.text(0.5, 0.5, "No activity yet", ha="center", color="#64748b")
+        ax.text(0.5, 0.5, "No activity yet", ha="center", color="#858585")
         ax.axis("off")
     else:
         ax.pie(sizes, labels=labels, colors=colors, autopct="%1.1f%%", startangle=120,
