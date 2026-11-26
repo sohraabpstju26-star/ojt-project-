@@ -408,8 +408,10 @@ tbody tr:last-child td { border-bottom: 0; }
 }
 .landing-nav .brand { border: 0; padding: 0; height: auto; }
 .landing-links { display: flex; align-items: center; gap: 30px; }
-.landing-links a { color: var(--text-secondary); font-size: 15px; font-weight: 500; }
+.landing-links a { position: relative; color: var(--text-secondary); font-size: 15px; font-weight: 500; padding: 4px 0; }
+.landing-links a::after { content: ''; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .22s ease; }
 .landing-links a:hover { color: var(--accent); }
+.landing-links a:hover::after { transform: scaleX(1); }
 .landing-actions { display: flex; gap: 12px; align-items: center; }
 .landing-container { max-width: 1220px; margin: 0 auto; padding: 0 6%; }
 .hero { text-align: center; padding: 100px 0 80px; position: relative; }
@@ -603,6 +605,13 @@ th.sortable:hover { color: var(--accent); }
 @media (max-width: 1000px) {
   #copy-vpa-top, #theme-top { display: none; }
 }
+
+/* ---------- Clean, restrained interactions ---------- */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:focus:not(:focus-visible), input:focus:not(:focus-visible) { outline: none; }
+.nav-item { transition: background .18s ease, color .18s ease, border-color .18s ease; }
+.btn { transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease; }
+.card, .kpi, .tile { transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1200px) {

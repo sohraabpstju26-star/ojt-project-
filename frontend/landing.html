@@ -11,7 +11,6 @@
 </head>
 <body class="landing-body">
   <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
-  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
   <div class="landing-grid-bg" aria-hidden="true"></div>
 
   <nav class="landing-nav">
@@ -275,12 +274,6 @@
       }
       window.addEventListener('scroll', updateProgress, { passive: true });
       updateProgress();
-
-      // Cursor-following ambient light
-      const glow = document.getElementById('cursor-glow');
-      window.addEventListener('mousemove', function (e) {
-        glow.style.transform = 'translate(' + (e.clientX - 230) + 'px,' + (e.clientY - 230) + 'px)';
-      }, { passive: true });
 
       // Typed, cycling eyebrow
       const typed = document.getElementById('typed-eyebrow');
