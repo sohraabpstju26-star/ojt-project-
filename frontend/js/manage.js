@@ -347,37 +347,220 @@
   // Analytics
   // -------------------------------------------------------------------------
   PF.views.analytics = async function (view) {
-    const [cashflow, categories, velocity, status, recon] = await Promise.all([
-      PF.api('/analytics/chart/cashflow?months=12'),
-      PF.api('/analytics/chart/categories'),
-      PF.api('/analytics/chart/velocity?days=14'),
-      PF.api('/analytics/chart/status'),
-      PF.api('/analytics/reconciliation'),
-    ]);
-    const chartCard = function (data, subtitle) {
-      return '<div class="card"><div class="card-head"><div><div class="card-title">' + PF.esc(data.title) +
-        '</div><div class="card-sub">' + subtitle + '</div></div></div>' +
-        '<div class="chart-frame"><img src="' + data.image + '" alt="' + PF.esc(data.title) + '"></div></div>';
-    };
-    const reconRows = recon.rows.map(function (r) {
-      return '<tr><td class="mono">' + PF.esc(r.code) + '</td><td>' + PF.esc(r.name) + '</td>' +
-        '<td>' + r.account_type + '</td><td class="align-right">' + PF.inr(r.opening_balance_paise) + '</td>' +
-        '<td class="align-right">' + PF.inr(r.debits_paise) + '</td>' +
-        '<td class="align-right">' + PF.inr(r.credits_paise) + '</td>' +
-        '<td class="align-right">' + PF.inr(r.expected_balance_paise) + '</td>' +
-        '<td class="align-right">' + PF.inr(r.cached_balance_paise) + '</td>' +
-        '<td>' + PF.badge(r.status, r.status === 'BALANCED' ? 'green' : 'red') + '</td></tr>';
-    }).join('');
-    view.innerHTML = PF.sectionHead('Financial Analytics', 'All figures computed from raw ledger lines with Pandas; rendered by Matplotlib (Agg)',
-      PF.badge(recon.all_balanced ? 'RECONCILED' : 'DISCREPANCY', recon.all_balanced ? 'green' : 'red')) +
-      '<div class="grid grid-2 mb-2">' +
-        chartCard(cashflow, 'Cumulative inflow vs outflow') + chartCard(categories, 'Spending mix by category') +
-        chartCard(velocity, 'Daily count and volume') + chartCard(status, 'Completed / pending / rejected') +
-      '</div>' +
-      '<div class="card"><div class="card-head"><div><div class="card-title">Account Reconciliation</div>' +
-        '<div class="card-sub">Opening ± movements must equal cached balance for every account</div></div>' +
-        '<span class="badge ' + (recon.discrepancies ? 'red' : 'green') + '">' + recon.discrepancies + ' discrepancies</span></div>' +
-        PF.table(['Code', 'Account', 'Type', 'Opening', 'Debits', 'Credits', 'Expected', 'Cached', 'Status'], reconRows, 'No accounts.') +
-      '</div>';
+    const state = { months: 12, days: 14, tab: 'charts', q: '', filter: 'ALL', sort: 'code', dir: 1 };
+    let data = null;
+    let charts = [];
+
+    function downloadUri(uri, name) {
+      const a = document.createElement('a');
+      a.href = uri; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+
+    function skeleton() {
+      view.innerHTML = '<div class="grid grid-4"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>' +
+        '<div class="card skeleton mt-2" style="min-height:300px"></div>';
+    }
+
+    async function load() {
+      skeleton();
+      const [cashflow, categories, velocity, status, recon] = await Promise.all([
+        PF.api('/analytics/chart/cashflow?months=' + state.months),
+        PF.api('/analytics/chart/categories'),
+        PF.api('/analytics/chart/velocity?days=' + state.days),
+        PF.api('/analytics/chart/status'),
+        PF.api('/analytics/reconciliation'),
+      ]);
+      data = { cashflow: cashflow, categories: categories, velocity: velocity, status: status, recon: recon };
+      charts = [cashflow, categories, velocity, status];
+      render();
+    }
+
+    function mini(label, value, tone, id) {
+      return '<div class="kpi kpi-mini"><div class="kpi-label">' + label + '</div>' +
+        '<div class="kpi-value ' + (tone || '') + '" id="' + id + '">' + value + '</div></div>';
+    }
+
+    function chartCard(chart, subtitle, idx) {
+      const summary = Object.entries(chart.summary || {}).slice(0, 3).map(function (kv) {
+        return '<span>' + PF.esc(kv[0].replace(/_/g, ' ')) + ': <b>' + PF.esc(kv[1]) + '</b></span>';
+      }).join(' · ');
+      return '<div class="card chart-card">' +
+        '<div class="card-head"><div><div class="card-title">' + PF.esc(chart.title) + '</div>' +
+        '<div class="card-sub">' + subtitle + '</div></div>' +
+        '<div class="chart-actions">' +
+          '<button class="btn btn-sm" data-zoom="' + idx + '">Expand</button>' +
+          '<button class="btn btn-sm" data-dl="' + idx + '">SVG</button>' +
+        '</div></div>' +
+        '<div class="chart-frame"><img src="' + chart.image + '" alt="' + PF.esc(chart.title) + '"></div>' +
+        '<div class="chart-summary">' + summary + '</div></div>';
+    }
+
+    function renderRecon() {
+      const recon = data.recon;
+      let rows = recon.rows.filter(function (r) {
+        const q = state.q.toLowerCase();
+        const okQ = !q || (r.code + ' ' + r.name + ' ' + r.account_type).toLowerCase().includes(q);
+        const okS = state.filter === 'ALL' || r.status === state.filter;
+        return okQ && okS;
+      });
+      rows.sort(function (a, b) {
+        const av = a[state.sort], bv = b[state.sort];
+        const c = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv));
+        return c * state.dir;
+      });
+      const cols = [
+        ['code', 'Code'], ['name', 'Account'], ['account_type', 'Type'],
+        ['opening_balance_paise', 'Opening'], ['debits_paise', 'Debits'], ['credits_paise', 'Credits'],
+        ['expected_balance_paise', 'Expected'], ['cached_balance_paise', 'Cached'], ['status', 'Status'],
+      ];
+      const head = cols.map(function (c) {
+        return '<th class="sortable" data-sort="' + c[0] + '">' + c[1] + (state.sort === c[0] ? (state.dir === 1 ? ' ▲' : ' ▼') : '') + '</th>';
+      }).join('');
+      const body = rows.map(function (r) {
+        return '<tr><td class="mono">' + PF.esc(r.code) + '</td><td>' + PF.esc(r.name) + '</td>' +
+          '<td>' + PF.esc(r.account_type) + '</td>' +
+          '<td class="align-right">' + PF.inr(r.opening_balance_paise) + '</td>' +
+          '<td class="align-right">' + PF.inr(r.debits_paise) + '</td>' +
+          '<td class="align-right">' + PF.inr(r.credits_paise) + '</td>' +
+          '<td class="align-right">' + PF.inr(r.expected_balance_paise) + '</td>' +
+          '<td class="align-right">' + PF.inr(r.cached_balance_paise) + '</td>' +
+          '<td>' + PF.badge(r.status, r.status === 'BALANCED' ? 'green' : 'red') + '</td></tr>';
+      }).join('');
+      const area = view.querySelector('#recon-area');
+      if (!area) return;
+      area.innerHTML = '<div class="table-wrap"><table><thead><tr>' + head + '</tr></thead><tbody>' +
+        (body || '<tr><td colspan="9"><div class="empty">No accounts match these filters.</div></td></tr>') +
+        '</tbody></table></div>';
+      area.querySelectorAll('[data-sort]').forEach(function (th) {
+        th.onclick = function () {
+          const key = th.dataset.sort;
+          if (state.sort === key) state.dir *= -1; else { state.sort = key; state.dir = 1; }
+          renderRecon();
+        };
+      });
+      const count = view.querySelector('#recon-count');
+      if (count) count.textContent = rows.length + ' / ' + recon.rows.length + ' accounts';
+    }
+
+    function render() {
+      const recon = data.recon;
+      const s = data.status.summary || {};
+      const cat = Object.entries(data.categories.summary || {});
+      const totalSpend = cat.reduce(function (a, kv) { return a + kv[1]; }, 0);
+      const max = cat.reduce(function (m, kv) { return Math.max(m, kv[1]); }, 1);
+
+      view.innerHTML = PF.sectionHead('Financial Analytics',
+        'Live figures computed from the immutable journal — adjust ranges, expand charts, drill into reconciliation',
+        '<div class="flex gap-1"><button class="btn btn-sm" id="an-refresh">↻ Refresh</button>' +
+        '<button class="btn btn-sm" id="an-export">⇩ Export CSV</button></div>') +
+
+        '<div class="analytics-toolbar">' +
+          '<span class="toolbar-label">CASH FLOW</span>' +
+          '<div class="seg" id="seg-months">' +
+            [6, 12].map(function (v) { return '<button data-v="' + v + '" class="' + (state.months === v ? 'active' : '') + '">' + v + 'M</button>'; }).join('') +
+          '</div>' +
+          '<span class="toolbar-label">VELOCITY</span>' +
+          '<div class="seg" id="seg-days">' +
+            [7, 14, 30].map(function (v) { return '<button data-v="' + v + '" class="' + (state.days === v ? 'active' : '') + '">' + v + 'D</button>'; }).join('') +
+          '</div>' +
+          '<span class="toolbar-note">All numbers from raw ledger lines</span>' +
+        '</div>' +
+
+        '<div class="grid grid-4 mb-2">' +
+          mini('Completed', s.completed || 0, 'green', 'mini-completed') +
+          mini('Pending', s.pending || 0, '', 'mini-pending') +
+          mini('Rejected / Cancelled', s.rejected || 0, 'red', 'mini-rejected') +
+          mini('Categorised Spend', PF.inr(totalSpend), 'blue', 'mini-spend') +
+        '</div>' +
+
+        '<div class="tab-bar"><button class="tab-btn ' + (state.tab === 'charts' ? 'active' : '') + '" data-tab="charts">Charts</button>' +
+          '<button class="tab-btn ' + (state.tab === 'recon' ? 'active' : '') + '" data-tab="recon">Reconciliation</button></div>' +
+
+        (state.tab === 'charts' ?
+          '<div class="grid grid-2 mb-2">' +
+            chartCard(charts[0], 'Cumulative received vs spent', 0) +
+            chartCard(charts[1], 'Spending distribution by category', 1) +
+            chartCard(charts[2], 'Daily transaction count and volume', 2) +
+            chartCard(charts[3], 'Completed vs pending vs rejected', 3) +
+          '</div>' +
+          '<div class="card"><div class="card-head"><div class="card-title">Category breakdown</div>' +
+            '<span class="badge blue">' + cat.length + ' categories</span></div>' +
+            (cat.length ? cat.map(function (kv) {
+              const pct = Math.max(3, Math.round(kv[1] / max * 100));
+              return '<div class="breakdown-row"><span>' + PF.esc(kv[0]) + '</span>' +
+                '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+                '<b>' + PF.inr(kv[1]) + '</b></div>';
+            }).join('') : '<div class="empty">No spending data.</div>') +
+          '</div>' :
+          '<div class="card"><div class="card-head"><div><div class="card-title">Account Reconciliation</div>' +
+            '<div class="card-sub">Expected balance (opening ± movements) must equal cached balance</div></div>' +
+            '<span class="badge ' + (recon.discrepancies ? 'red' : 'green') + '">' +
+            (recon.discrepancies ? recon.discrepancies + ' discrepancies' : 'ALL BALANCED') + '</span></div>' +
+            '<div class="recon-toolbar">' +
+              '<input id="recon-search" placeholder="Search account code or name…" value="' + PF.esc(state.q) + '">' +
+              '<div class="seg" id="seg-filter">' +
+                ['ALL', 'BALANCED', 'DISCREPANCY'].map(function (v) {
+                  return '<button data-v="' + v + '" class="' + (state.filter === v ? 'active' : '') + '">' + v + '</button>';
+                }).join('') +
+              '</div>' +
+              '<span class="toolbar-note" id="recon-count"></span>' +
+            '</div>' +
+            '<div id="recon-area"></div>' +
+          '</div>'
+        );
+
+      const num = function (id, v) { const n = view.querySelector('#' + id); if (n) PF.animateNumber(n, v, '', ''); };
+      num('mini-completed', s.completed || 0);
+      num('mini-pending', s.pending || 0);
+      num('mini-rejected', s.rejected || 0);
+      const spendNode = view.querySelector('#mini-spend');
+      if (spendNode) PF.animateNumber(spendNode, totalSpend, 'Rs. ', '');
+
+      view.querySelectorAll('#seg-months button').forEach(function (b) {
+        b.onclick = function () { state.months = Number(b.dataset.v); load(); };
+      });
+      view.querySelectorAll('#seg-days button').forEach(function (b) {
+        b.onclick = function () { state.days = Number(b.dataset.v); load(); };
+      });
+      view.querySelector('#an-refresh').onclick = load;
+      view.querySelector('#an-export').onclick = function () {
+        const head = 'Code,Name,Type,Opening Paise,Debits Paise,Credits Paise,Expected Paise,Cached Paise,Status\n';
+        const body = recon.rows.map(function (r) {
+          return [r.code, r.name, r.account_type, r.opening_balance_paise, r.debits_paise,
+            r.credits_paise, r.expected_balance_paise, r.cached_balance_paise, r.status]
+            .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        const uri = URL.createObjectURL(new Blob([head + body], { type: 'text/csv' }));
+        downloadUri(uri, 'payflow-reconciliation.csv');
+        URL.revokeObjectURL(uri);
+      };
+      view.querySelectorAll('[data-tab]').forEach(function (b) {
+        b.onclick = function () { state.tab = b.dataset.tab; render(); };
+      });
+      view.querySelectorAll('[data-zoom]').forEach(function (b) {
+        b.onclick = function () {
+          const c = charts[Number(b.dataset.zoom)];
+          const modal = PF.modal('<div class="modal-head"><h3>' + PF.esc(c.title) + '</h3></div>' +
+            '<div class="chart-frame"><img src="' + c.image + '" alt="' + PF.esc(c.title) + '"></div>' +
+            '<div class="chart-summary mt-2">' + JSON.stringify(c.summary, null, 2).replace(/"/g, '') + '</div>' +
+            '<div class="modal-foot"><button class="btn" id="zoom-close">Close</button></div>', true);
+          modal.querySelector('#zoom-close').onclick = PF.closeModal;
+        };
+      });
+      view.querySelectorAll('[data-dl]').forEach(function (b) {
+        b.onclick = function () { downloadUri(charts[Number(b.dataset.dl)].image, 'payflow-chart-' + b.dataset.dl + '.svg'); };
+      });
+
+      if (state.tab === 'recon') {
+        renderRecon();
+        view.querySelector('#recon-search').oninput = function (e) { state.q = e.target.value; renderRecon(); };
+        view.querySelectorAll('#seg-filter button').forEach(function (b) {
+          b.onclick = function () { state.filter = b.dataset.v; render(); };
+        });
+      }
+    }
+
+    await load();
   };
 })();
