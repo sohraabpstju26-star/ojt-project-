@@ -465,6 +465,22 @@ tbody tr:last-child td { border-bottom: 0; }
 }
 .landing-footer a { color: var(--text-secondary); margin-left: 22px; }
 
+/* ---------- Expense & oddity panel ---------- */
+.odd-line { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.odd-line:last-child { border-bottom: 0; }
+.odd-line span:first-child { color: var(--text-muted); }
+.odd-line span:nth-child(2) { margin-left: auto; color: var(--text-secondary); }
+.odd-line b { min-width: 110px; text-align: right; font-family: var(--font-mono); }
+.flag-chip { display: inline-block; padding: 4px 8px; margin: 2px 3px 2px 0; border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-2); font-family: var(--font-mono); font-size: 10px; letter-spacing: .5px; border-radius: var(--radius-sm); }
+
+/* Crisp white accents on selected surfaces */
+body:not(.theme-light) .card { border-top-color: rgba(255, 255, 255, 0.16); }
+body:not(.theme-light) .kpi { border-top-color: rgba(255, 255, 255, 0.16); }
+.badge.white { background: rgba(255,255,255,.08); color: #ffffff; border-color: rgba(255,255,255,.32); }
+.crisp { color: #ffffff !important; }
+.crisp-border { border-color: rgba(255,255,255,.38) !important; }
+.white-rule { height: 1px; background: linear-gradient(90deg, rgba(255,255,255,.55), transparent); margin: 18px 0; }
+
 /* ---------- Interactive analytics ---------- */
 .analytics-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary); margin-bottom: 20px; }
 .toolbar-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; color: var(--text-muted); }

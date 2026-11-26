@@ -347,7 +347,7 @@
   // Analytics
   // -------------------------------------------------------------------------
   PF.views.analytics = async function (view) {
-    const state = { months: 12, days: 14, tab: 'charts', q: '', filter: 'ALL', sort: 'code', dir: 1 };
+    const state = { months: 12, days: 14, tab: 'charts', q: '', filter: 'ALL', sort: 'code', dir: 1, odd: 'ALL' };
     let data = null;
     let charts = [];
 
@@ -364,14 +364,15 @@
 
     async function load() {
       skeleton();
-      const [cashflow, categories, velocity, status, recon] = await Promise.all([
+      const [cashflow, categories, velocity, status, recon, txns] = await Promise.all([
         PF.api('/analytics/chart/cashflow?months=' + state.months),
         PF.api('/analytics/chart/categories'),
         PF.api('/analytics/chart/velocity?days=' + state.days),
         PF.api('/analytics/chart/status'),
         PF.api('/analytics/reconciliation'),
+        PF.api('/transactions'),
       ]);
-      data = { cashflow: cashflow, categories: categories, velocity: velocity, status: status, recon: recon };
+      data = { cashflow: cashflow, categories: categories, velocity: velocity, status: status, recon: recon, txns: txns };
       charts = [cashflow, categories, velocity, status];
       render();
     }
@@ -443,6 +444,81 @@
       if (count) count.textContent = rows.length + ' / ' + recon.rows.length + ' accounts';
     }
 
+    function renderOddities() {
+      const txns = data.txns || [];
+      const debit = txns.filter(function (t) { return t.direction === 'DEBIT'; });
+      const credit = txns.filter(function (t) { return t.direction === 'CREDIT'; });
+      const outflow = debit.reduce(function (a, t) { return a + t.amount_paise; }, 0);
+      const inflow = credit.reduce(function (a, t) { return a + t.amount_paise; }, 0);
+      const avg = debit.length ? Math.round(outflow / debit.length) : 0;
+      const flags = [];
+      txns.forEach(function (t) {
+        const reasons = [];
+        if (t.direction === 'DEBIT' && avg && t.amount_paise > avg * 3) reasons.push('LARGE OUTFLOW');
+        const hr = new Date(t.timestamp).getHours();
+        if (hr >= 0 && hr < 6) reasons.push('OFF-HOURS');
+        if (t.category === 'Reversal' || t.category === 'Refund') reasons.push('CORRECTION');
+        if (t.status && t.status !== 'COMPLETED') reasons.push('NOT COMPLETED');
+        if (reasons.length) flags.push({ t: t, reasons: reasons });
+      });
+      const corrections = txns.filter(function (t) { return t.category === 'Reversal' || t.category === 'Refund'; });
+      const byCat = {};
+      debit.forEach(function (t) { byCat[t.category] = (byCat[t.category] || 0) + t.amount_paise; });
+      const cats = Object.entries(byCat).sort(function (a, b) { return b[1] - a[1]; });
+      const max = cats.reduce(function (m, k) { return Math.max(m, k[1]); }, 1);
+      const shown = flags.filter(function (f) { return state.odd === 'ALL' || f.reasons.indexOf(state.odd) !== -1; });
+      const area = view.querySelector('#odd-area');
+      if (!area) return;
+      area.innerHTML =
+        '<div class="grid grid-4 mb-2">' +
+          '<div class="kpi kpi-mini"><div class="kpi-label">Money out</div><div class="kpi-value red">' + PF.inr(outflow) + '</div></div>' +
+          '<div class="kpi kpi-mini"><div class="kpi-label">Money in</div><div class="kpi-value green">' + PF.inr(inflow) + '</div></div>' +
+          '<div class="kpi kpi-mini"><div class="kpi-label">Net position</div><div class="kpi-value ' + (inflow >= outflow ? 'green' : 'red') + '">' + PF.inr(inflow - outflow) + '</div></div>' +
+          '<div class="kpi kpi-mini"><div class="kpi-label">Odd flags</div><div class="kpi-value blue">' + flags.length + '</div></div>' +
+        '</div>' +
+        '<div class="grid grid-2 mb-2">' +
+          '<div class="card"><div class="card-head"><div class="card-title">Where the money went</div>' +
+            '<span class="badge blue">DEBITS</span></div>' +
+            (cats.length ? cats.map(function (kv) {
+              return '<div class="breakdown-row"><span>' + PF.esc(kv[0]) + '</span>' +
+                '<div class="bar-track"><div class="bar-fill" style="width:' + Math.max(3, Math.round(kv[1] / max * 100)) + '%"></div></div>' +
+                '<b>' + PF.inr(kv[1]) + '</b></div>';
+            }).join('') : '<div class="empty">No outgoing transactions yet.</div>') +
+          '</div>' +
+          '<div class="card"><div class="card-head"><div><div class="card-title">Corrections &amp; refunds</div>' +
+            '<div class="card-sub">Entries that reversed or returned money</div></div>' +
+            '<span class="badge amber">' + corrections.length + '</span></div>' +
+            (corrections.length ? corrections.map(function (t) {
+              return '<div class="odd-line"><span class="mono">' + PF.esc(t.transaction_id) + '</span>' +
+                '<span>' + PF.esc(t.category) + '</span><b class="' + (t.direction === 'DEBIT' ? 'danger' : 'success') + '">' +
+                (t.direction === 'DEBIT' ? '−' : '+') + PF.inr(t.amount_paise) + '</b></div>';
+            }).join('') : '<div class="empty">No reversals or refunds recorded.</div>') +
+          '</div>' +
+        '</div>' +
+        '<div class="card"><div class="card-head"><div><div class="card-title">Unusual activity</div>' +
+          '<div class="card-sub">Detected from real transaction data — large outflows, off-hours timing, corrections and incomplete status</div></div>' +
+          '<div class="seg" id="seg-odd">' +
+            ['ALL', 'LARGE OUTFLOW', 'OFF-HOURS', 'CORRECTION', 'NOT COMPLETED'].map(function (v) {
+              return '<button data-v="' + v + '" class="' + (state.odd === v ? 'active' : '') + '">' + v + '</button>';
+            }).join('') +
+          '</div></div>' +
+          (shown.length ? '<div class="table-wrap"><table><thead><tr><th>Transaction</th><th>Date / Time</th><th>Counterparty</th><th>Category</th><th>Amount</th><th>Why flagged</th></tr></thead><tbody>' +
+            shown.map(function (f) {
+              return '<tr><td class="mono">' + PF.esc(f.t.transaction_id) + '</td>' +
+                '<td class="nowrap text-xs">' + PF.esc(PF.fmtDate(f.t.timestamp)) + '</td>' +
+                '<td class="mono">' + PF.esc(f.t.counterparty) + '</td>' +
+                '<td>' + PF.badge(f.t.category, 'blue') + '</td>' +
+                '<td class="align-right ' + (f.t.direction === 'DEBIT' ? 'danger' : 'success') + '">' +
+                (f.t.direction === 'DEBIT' ? '−' : '+') + PF.inr(f.t.amount_paise) + '</td>' +
+                '<td>' + f.reasons.map(function (r) { return '<span class="flag-chip">' + PF.esc(r) + '</span>'; }).join(' ') + '</td></tr>';
+            }).join('') + '</tbody></table></div>' : '<div class="empty">Nothing unusual for this filter.</div>') +
+        '</div>';
+
+      area.querySelectorAll('#seg-odd button').forEach(function (b) {
+        b.onclick = function () { state.odd = b.dataset.v; renderOddities(); };
+      });
+    }
+
     function render() {
       const recon = data.recon;
       const s = data.status.summary || {};
@@ -475,6 +551,7 @@
         '</div>' +
 
         '<div class="tab-bar"><button class="tab-btn ' + (state.tab === 'charts' ? 'active' : '') + '" data-tab="charts">Charts</button>' +
+          '<button class="tab-btn ' + (state.tab === 'oddities' ? 'active' : '') + '" data-tab="oddities">Expense &amp; Oddities</button>' +
           '<button class="tab-btn ' + (state.tab === 'recon' ? 'active' : '') + '" data-tab="recon">Reconciliation</button></div>' +
 
         (state.tab === 'charts' ?
@@ -492,7 +569,7 @@
                 '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
                 '<b>' + PF.inr(kv[1]) + '</b></div>';
             }).join('') : '<div class="empty">No spending data.</div>') +
-          '</div>' :
+          '</div>' : (state.tab === 'oddities' ? '<div id="odd-area"></div>' :
           '<div class="card"><div class="card-head"><div><div class="card-title">Account Reconciliation</div>' +
             '<div class="card-sub">Expected balance (opening ± movements) must equal cached balance</div></div>' +
             '<span class="badge ' + (recon.discrepancies ? 'red' : 'green') + '">' +
@@ -507,7 +584,7 @@
               '<span class="toolbar-note" id="recon-count"></span>' +
             '</div>' +
             '<div id="recon-area"></div>' +
-          '</div>'
+          '</div>')
         );
 
       const num = function (id, v) { const n = view.querySelector('#' + id); if (n) PF.animateNumber(n, v, '', ''); };
@@ -551,6 +628,8 @@
       view.querySelectorAll('[data-dl]').forEach(function (b) {
         b.onclick = function () { downloadUri(charts[Number(b.dataset.dl)].image, 'payflow-chart-' + b.dataset.dl + '.svg'); };
       });
+
+      if (state.tab === 'oddities') renderOddities();
 
       if (state.tab === 'recon') {
         renderRecon();
