@@ -29,6 +29,29 @@ DEMO_USERS = [
      "phone": "+910000000012", "password": "Merchant@123", "role": "Merchant", "vpa": "reliance_fresh@payflow"},
     {"username": "metro_rail", "full_name": "Metro Rail Transit", "email": "metro@payflow.local",
      "phone": "+910000000013", "password": "Merchant@123", "role": "Merchant", "vpa": "metro_rail@payflow"},
+    # Extra customers
+    {"username": "priya_verma", "full_name": "Priya Verma", "email": "priya.verma@example.com",
+     "phone": "+919876543212", "password": "Customer@123", "role": "Customer", "vpa": "priya_verma@payflow"},
+    {"username": "vikram_singh", "full_name": "Vikram Singh", "email": "vikram.singh@example.com",
+     "phone": "+919876543213", "password": "Customer@123", "role": "Customer", "vpa": "vikram_singh@payflow"},
+    {"username": "meera_iyer", "full_name": "Meera Iyer", "email": "meera.iyer@example.com",
+     "phone": "+919876543214", "password": "Customer@123", "role": "Customer", "vpa": "meera_iyer@payflow"},
+    {"username": "arjun_mehta", "full_name": "Arjun Mehta", "email": "arjun.mehta@example.com",
+     "phone": "+919876543215", "password": "Customer@123", "role": "Customer", "vpa": "arjun_mehta@payflow"},
+    # Extra merchants
+    {"username": "croma", "full_name": "Croma Electronics", "email": "croma@payflow.local",
+     "phone": "+910000000014", "password": "Merchant@123", "role": "Merchant", "vpa": "croma@payflow"},
+    {"username": "dominos", "full_name": "Domino's Pizza", "email": "dominos@payflow.local",
+     "phone": "+910000000015", "password": "Merchant@123", "role": "Merchant", "vpa": "dominos@payflow"},
+    {"username": "uber_rides", "full_name": "Uber Rides India", "email": "uber@payflow.local",
+     "phone": "+910000000016", "password": "Merchant@123", "role": "Merchant", "vpa": "uber_rides@payflow"},
+    {"username": "nature_basket", "full_name": "Nature's Basket", "email": "naturebasket@payflow.local",
+     "phone": "+910000000017", "password": "Merchant@123", "role": "Merchant", "vpa": "nature_basket@payflow"},
+    # Extra staff (same RBAC rules, more identities to demonstrate role management)
+    {"username": "operator2", "full_name": "Sneha Operator", "email": "operator2@payflow.local",
+     "phone": "+910000000004", "password": "Oper@12345", "role": "Operator", "vpa": "operator2@payflow"},
+    {"username": "auditor2", "full_name": "Karan Auditor", "email": "auditor2@payflow.local",
+     "phone": "+910000000005", "password": "Audit@12345", "role": "Auditor", "vpa": "auditor2@payflow"},
 ]
 
 MERCHANT_META = {
@@ -36,6 +59,10 @@ MERCHANT_META = {
     "blue_tokai@payflow": ("Food & Beverage", "Speciality coffee roasters"),
     "reliance_fresh@payflow": ("Grocery", "Fresh produce and groceries"),
     "metro_rail@payflow": ("Travel", "Urban metro transit tickets"),
+    "croma@payflow": ("Electronics", "Consumer electronics and accessories"),
+    "dominos@payflow": ("Food & Beverage", "Pizza and quick-service meals"),
+    "uber_rides@payflow": ("Travel", "Ride-hailing trips"),
+    "nature_basket@payflow": ("Grocery", "Premium groceries and essentials"),
 }
 
 
@@ -173,6 +200,61 @@ def ensure_initialized(force: bool = False) -> None:
                 metadata={"seed": True},
             )
         seed_history(primary_account)
+
+    # Fund the additional demo identities idempotently. This also works on an
+    # existing data directory, so adding users never requires deleting data.
+    extra_funding = {
+        "priya_verma": 3_000_000, "vikram_singh": 2_400_000,
+        "meera_iyer": 1_800_000, "arjun_mehta": 4_200_000,
+        "croma": 800_000, "dominos": 600_000,
+        "uber_rides": 700_000, "nature_basket": 900_000,
+        "operator2": 500_000, "auditor2": 500_000,
+    }
+    for username, amount in extra_funding.items():
+        if username not in users_by_name:
+            continue
+        ref = f"SEED/V2/TOP/{username.upper()}"
+        if any(e.get("reference") == ref for e in stores.entries.read()):
+            continue
+        ledger.top_up(
+            primary_account(username), amount,
+            description=f"Simulated wallet funding - {username}",
+            reference=ref,
+            metadata={"seed": True},
+        )
+
+    # A few safe backdated flows between the new identities only. We never
+    # touch aditi/rohit here so existing test expectations stay valid.
+    extra_specs = [
+        (2, "priya_verma", "croma", 24_900, "Merchant Payment", "Headphones"),
+        (9, "vikram_singh", "dominos", 32_500, "Merchant Payment", "Family dinner"),
+        (17, "meera_iyer", "uber_rides", 18_000, "Merchant Payment", "Airport ride"),
+        (26, "arjun_mehta", "nature_basket", 76_000, "Merchant Payment", "Weekly groceries"),
+        (38, "priya_verma", "vikram_singh", 45_000, "P2P Transfer", "Concert tickets"),
+        (52, "meera_iyer", "croma", 89_900, "Merchant Payment", "Laptop accessory"),
+    ]
+    for days, sender, receiver, amount, category, note in extra_specs:
+        ref = f"SEED/V2/HIST/{days}/{sender[:3]}/{receiver[:3]}"
+        if any(e.get("reference") == ref for e in stores.entries.read()):
+            continue
+        stamp = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(
+            timespec="seconds"
+        ).replace("+00:00", "Z")
+        from_acc, to_acc = primary_account(sender), primary_account(receiver)
+        lines = [
+            {"account_id": to_acc, "debit_paise": amount, "credit_paise": 0, "description": note},
+            {"account_id": from_acc, "debit_paise": 0, "credit_paise": amount, "description": note},
+        ]
+        ledger.post_entry(
+            description=f"{note} - {receiver}", lines=lines, category=category,
+            reference=ref,
+            metadata={
+                "seed": True, "sender_vpa": sender + "@payflow",
+                "receiver_vpa": receiver + "@payflow",
+                "payment_method": "VPA", "fee_paise": 0,
+            },
+            occurred_at=stamp,
+        )
 
 
 def seed_history(primary_account) -> None:

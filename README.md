@@ -55,6 +55,16 @@ export PAYFLOW_SECURE_COOKIES=1                          # secure cookies behind
 | Operator | `operator` | `Oper@12345` |
 | Auditor | `auditor` | `Audit@12345` |
 | Administrator | `admin` | `Admin@12345` |
+| Customer | `priya_verma` | `Customer@123` |
+| Customer | `vikram_singh` | `Customer@123` |
+| Customer | `meera_iyer` | `Customer@123` |
+| Customer | `arjun_mehta` | `Customer@123` |
+| Merchant | `croma` | `Merchant@123` |
+| Merchant | `dominos` | `Merchant@123` |
+| Merchant | `uber_rides` | `Merchant@123` |
+| Merchant | `nature_basket` | `Merchant@123` |
+| Operator | `operator2` | `Oper@12345` |
+| Auditor | `auditor2` | `Audit@12345` |
 
 Demo data is seeded idempotently on first boot (system accounts, funded wallets, and six
 months of backdated journal activity). New users can self-register as Customer or Merchant.
