@@ -29,10 +29,11 @@
   --shadow-card: 0 12px 34px -12px rgba(0, 0, 0, 0.7);
   --shadow-modal: 0 28px 70px -12px rgba(0, 0, 0, 0.85);
 
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  --radius-full: 999px;
+  /* Sharp, industrial edges — no pill-shaped containers */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-full: 2px;
 
   --sidebar-width: 274px;
   --sidebar-collapsed: 84px;

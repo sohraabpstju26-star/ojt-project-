@@ -122,4 +122,31 @@
     return '<div class="section-head"><div><h2>' + PF.esc(title) + '</h2><p>' + PF.esc(subtitle || '') + '</p></div>' +
       (actionHtml || '') + '</div>';
   };
+
+  // Single source of truth for signing out. Even if the API call fails we still
+  // clear local state and leave the app, so a stale session can never linger.
+  PF.logout = async function () {
+    try { await PF.api('/auth/logout', { method: 'POST' }); }
+    catch (e) { /* network error must not trap the user inside the app */ }
+    try { sessionStorage.clear(); } catch (e) { /* storage may be disabled */ }
+    PF.state.user = null;
+    PF.state.permissions = [];
+    PF.state.loggedOut = true;
+    PF.closeModal();
+    window.location.replace('/login.html?logged_out=1');
+  };
+
+  PF.animateNumber = function (node, target, prefix, suffix) {
+    if (!node) return;
+    const start = performance.now();
+    const duration = 700;
+    function step(now) {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const value = Math.round(target * eased);
+      node.textContent = (prefix || '') + value.toLocaleString('en-IN') + (suffix || '');
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  };
 })();

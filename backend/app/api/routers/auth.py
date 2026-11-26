@@ -82,9 +82,17 @@ def mfa_disable(payload: MFAVerifyIn, user=Depends(get_current_user)):
 
 @router.post("/logout")
 def logout(response: Response, token=Depends(session_token)):
+    # Invalidate server-side session first, then clear the browser cookie with
+    # the exact same attributes used when it was created.
     auth_service.logout(token)
-    response.delete_cookie(config.SESSION_COOKIE, path="/")
-    return {"message": "Session revoked"}
+    response.delete_cookie(
+        key=config.SESSION_COOKIE,
+        path="/",
+        httponly=True,
+        secure=SECURE_COOKIES,
+        samesite="strict",
+    )
+    return {"message": "Session revoked", "logged_out": True}
 
 
 @router.get("/session", response_model=SessionOut)

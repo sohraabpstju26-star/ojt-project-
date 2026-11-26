@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="/css/landing.css">
 </head>
 <body class="landing-body">
+  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
+  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
   <div class="landing-grid-bg" aria-hidden="true"></div>
 
   <nav class="landing-nav">
@@ -32,7 +34,7 @@
 
   <header class="landing-container hero hero-split">
     <div class="hero-copy">
-      <div class="eyebrow">SIMULATED PAYMENTS INFRASTRUCTURE</div>
+      <div class="eyebrow"><span id="typed-eyebrow" class="typed">SIMULATED PAYMENTS INFRASTRUCTURE</span></div>
       <h1>Move money fast.<br><span>Keep the books honest.</span></h1>
       <p>PAYFLOW turns payments into a clean, auditable story. Send by VPA, collect with approval, scan a QR, pay a bill — and every rupee lands in an immutable double-entry ledger that always balances.</p>
       <div class="hero-cta">
@@ -97,6 +99,19 @@
       <div><span>02</span><b>Append-only by design</b><small>Corrections are linked entries</small></div>
       <div><span>03</span><b>Balances you can prove</b><small>Reconciliation on every account</small></div>
       <div><span>04</span><b>Access with boundaries</b><small>Server-enforced roles</small></div>
+    </div>
+  </div>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span><b>◆</b> INTEGER PAISE PRECISION</span><span><b>◆</b> APPEND-ONLY JOURNAL</span>
+      <span><b>◆</b> ZERO-SUM TRIAL BALANCE</span><span><b>◆</b> ROLE-BASED ACCESS</span>
+      <span><b>◆</b> ARGON2ID PASSWORDS</span><span><b>◆</b> TOTP MFA</span>
+      <span><b>◆</b> SERVER-RENDERED ANALYTICS</span><span><b>◆</b> ATOMIC WRITES</span>
+      <span><b>◆</b> INTEGER PAISE PRECISION</span><span><b>◆</b> APPEND-ONLY JOURNAL</span>
+      <span><b>◆</b> ZERO-SUM TRIAL BALANCE</span><span><b>◆</b> ROLE-BASED ACCESS</span>
+      <span><b>◆</b> ARGON2ID PASSWORDS</span><span><b>◆</b> TOTP MFA</span>
+      <span><b>◆</b> SERVER-RENDERED ANALYTICS</span><span><b>◆</b> ATOMIC WRITES</span>
     </div>
   </div>
 
@@ -238,6 +253,36 @@
   <script>
     (function () {
       document.body.classList.add('js-ready');
+
+      // Scroll progress bar
+      const progress = document.getElementById('scroll-progress');
+      function updateProgress() {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        progress.style.width = (max > 0 ? (window.scrollY / max) * 100 : 0) + '%';
+      }
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      updateProgress();
+
+      // Cursor-following ambient light
+      const glow = document.getElementById('cursor-glow');
+      window.addEventListener('mousemove', function (e) {
+        glow.style.transform = 'translate(' + (e.clientX - 230) + 'px,' + (e.clientY - 230) + 'px)';
+      }, { passive: true });
+
+      // Typed, cycling eyebrow
+      const typed = document.getElementById('typed-eyebrow');
+      const phrases = ['SIMULATED PAYMENTS INFRASTRUCTURE', 'BUILT ON AN IMMUTABLE LEDGER', 'PRECISE TO THE PAISE'];
+      let pi = 0, ci = 0, deleting = false;
+      function tick() {
+        const full = phrases[pi];
+        ci += deleting ? -1 : 1;
+        typed.textContent = full.slice(0, ci);
+        if (!deleting && ci === full.length) { deleting = true; setTimeout(tick, 1600); return; }
+        if (deleting && ci === 0) { deleting = false; pi = (pi + 1) % phrases.length; setTimeout(tick, 350); return; }
+        setTimeout(tick, deleting ? 35 : 65);
+      }
+      if (typed && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) tick();
+
       // Mobile navigation
       const menu = document.getElementById('landing-menu');
       const links = document.getElementById('landing-links');
@@ -249,7 +294,16 @@
       fetch('/api/health').then(function (r) { return r.json(); }).then(function (h) {
         if (h.status === 'OK' && h.ledger_balanced) {
           title.textContent = 'System operational · ledger balanced';
-          detail.textContent = 'Live check: trial balance difference is ' + h.difference_paise + ' paise.';
+          detail.innerHTML = 'Live check: trial balance difference is <b class="accent" id="live-number">0</b> paise.';
+          const node = document.getElementById('live-number');
+          const target = h.difference_paise;
+          const start = performance.now();
+          function anim(now) {
+            const p = Math.min(1, (now - start) / 900);
+            node.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+            if (p < 1) requestAnimationFrame(anim);
+          }
+          requestAnimationFrame(anim);
         } else {
           title.textContent = 'Ledger integrity warning';
           detail.textContent = 'Live check reported a non-zero trial balance difference.';

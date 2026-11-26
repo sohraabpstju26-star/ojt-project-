@@ -38,6 +38,16 @@ async def ledger_error_handler(request: Request, exc: LedgerError):
     return JSONResponse(status_code=400, content={"detail": str(exc), "error": "LEDGER_INVARIANT"})
 
 
+@app.middleware("http")
+async def no_cache_for_pages(request: Request, call_next):
+    """Stop the browser from restoring authenticated pages from bfcache/cache."""
+    response = await call_next(request)
+    if not request.url.path.startswith("/api/") and not request.url.path.startswith("/docs"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
+
 for router in (
     auth.router, wallets.router, payments.router, requests.router,
     beneficiaries.router, bills.router, ledger.router, analytics.router,

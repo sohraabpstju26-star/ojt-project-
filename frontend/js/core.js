@@ -88,16 +88,32 @@
             '<button class="mobile-menu" id="mobile-menu" title="Open menu">☰</button>' +
             '<div><div class="page-title" id="page-title">Overview</div><div class="page-subtitle" id="page-subtitle"></div></div>' +
             '<div class="topbar-right">' +
+              '<button class="btn btn-primary btn-sm" id="quick-send">+ New Payment</button>' +
+              '<span class="env-badge">SIMULATION</span>' +
               '<span class="vpa-chip" id="top-vpa">' + PF.esc(state.user.vpa) + '</span>' +
+              '<button class="top-icon" id="copy-vpa-top" title="Copy VPA">⧉</button>' +
+              '<button class="top-icon" id="theme-top" title="Toggle theme">◐</button>' +
+              '<button class="top-icon notif-bell" id="notif-bell" title="Notifications">◆<span class="notif-dot hidden" id="notif-dot"></span></button>' +
+              '<div class="notif-panel hidden" id="notif-panel"></div>' +
               '<div class="avatar">' + PF.esc(initials) + '</div>' +
               '<div class="user-meta"><b>' + PF.esc(state.user.full_name) + '</b><small>' + PF.esc(state.user.role) + '</small></div>' +
-              '<button class="icon-btn" id="logout-btn" title="Sign out">⇥</button>' +
+              '<button class="logout-btn" id="logout-btn" title="Sign out">Sign out</button>' +
             '</div>' +
           '</header>' +
           '<main class="view" id="view"></main>' +
         '</div>' +
       '</div>' +
-      '<div class="toast-stack" id="toast-stack"></div>';
+      '<div class="toast-stack" id="toast-stack"></div>' +
+      '<div class="status-rail" id="status-rail">' +
+        '<span class="rail-dot"></span> LEDGER: BALANCED' +
+        '<span class="rail-sep">│</span> SESSION: ACTIVE' +
+        '<span class="rail-sep">│</span> ENV: SIMULATED' +
+        '<span class="rail-right">PAYFLOW v1.0 · integer-paise ledger</span>' +
+      '</div>' +
+      '<div class="cmd-backdrop hidden" id="cmd-backdrop">' +
+        '<div class="cmd-box"><div class="cmd-input-wrap">⌕ <input id="cmd-input" placeholder="Search pages…  (Esc to close)" autocomplete="off"></div>' +
+        '<div id="cmd-list" class="cmd-list"></div></div>' +
+      '</div>';
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('nav-overlay');
@@ -115,10 +131,84 @@
       overlay.classList.add('show');
     };
     overlay.onclick = closeMobile;
-    document.getElementById('logout-btn').onclick = async function () {
-      await PF.api('/auth/logout', { method: 'POST' });
-      location.href = '/login.html';
+
+    // --- Sign out: confirm, revoke server session, clear local state, hard leave.
+    document.getElementById('logout-btn').onclick = function () {
+      PF.confirm('Sign out of PAYFLOW?', 'Your session will be revoked on the server and this device will return to the login page.', PF.logout, true);
     };
+    // bfcache guard: pressing Back must never resurrect a signed-out app shell.
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted && PF.state.loggedOut) window.location.replace('/login.html?logged_out=1');
+    });
+
+    document.getElementById('quick-send').onclick = function () { location.hash = '#/send'; };
+    // Keep the industry-style status rail honest by reading real health data.
+    PF.api('/health').then(function (h) {
+      const rail = document.getElementById('status-rail');
+      if (rail && h.ledger_balanced === false) rail.innerHTML = rail.innerHTML.replace('LEDGER: BALANCED', 'LEDGER: IMBALANCED');
+    }).catch(function () {});
+
+    document.getElementById('copy-vpa-top').onclick = function () { PF.copy(state.user.vpa); };
+    document.getElementById('theme-top').onclick = async function () {
+      try {
+        const s = await PF.api('/settings');
+        const next = s.theme === 'light' ? 'dark' : 'light';
+        await PF.api('/settings', { method: 'PUT', body: { theme: next } });
+        document.body.classList.toggle('theme-light', next === 'light');
+        PF.toast('Theme switched to ' + next, 'ok');
+      } catch (err) { PF.showError(err); }
+    };
+
+    const panel = document.getElementById('notif-panel');
+    const dot = document.getElementById('notif-dot');
+    async function loadNotifs() {
+      try {
+        const rows = await PF.api('/notifications');
+        const unread = rows.filter(function (n) { return !n.read; }).length;
+        dot.classList.toggle('hidden', unread === 0);
+        dot.textContent = unread > 9 ? '9+' : String(unread);
+        panel.innerHTML = '<div class="notif-head"><b>Notifications</b>' +
+          (unread ? '<button class="btn btn-sm" id="notif-read">Mark all read</button>' : '') + '</div>' +
+          (rows.slice(0, 6).map(function (n) {
+            return '<div class="notif-item' + (n.read ? '' : ' unread') + '"><b>' + PF.esc(n.title) + '</b>' +
+              '<p>' + PF.esc(n.message) + '</p><small>' + PF.esc(PF.fmtDate(n.created_at)) + '</small></div>';
+          }).join('') || '<div class="empty">No notifications.</div>');
+        const readBtn = panel.querySelector('#notif-read');
+        if (readBtn) readBtn.onclick = async function () {
+          try { await PF.api('/notifications/read-all', { method: 'POST' }); loadNotifs(); PF.toast('All caught up', 'ok'); }
+          catch (err) { PF.showError(err); }
+        };
+      } catch (err) { /* collapsed environment: notifications are optional UI */ }
+    }
+    document.getElementById('notif-bell').onclick = function () {
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) loadNotifs();
+    };
+    loadNotifs();
+
+    // --- Command palette (Ctrl/Cmd + K)
+    const backdrop = document.getElementById('cmd-backdrop');
+    const cmdInput = document.getElementById('cmd-input');
+    const cmdList = document.getElementById('cmd-list');
+    const targets = NAV.flatMap(function (g) { return g.items; }).filter(allowed);
+    function renderCmd(q) {
+      const items = targets.filter(function (t) { return t.label.toLowerCase().includes((q || '').toLowerCase()); });
+      cmdList.innerHTML = items.map(function (t) {
+        return '<button class="cmd-row" data-goto="' + t.id + '"><span>' + t.icon + '</span>' + PF.esc(t.label) + '</button>';
+      }).join('') || '<div class="empty">No matching page.</div>';
+      cmdList.querySelectorAll('[data-goto]').forEach(function (b) {
+        b.onclick = function () { closeCmd(); location.hash = '#/' + b.dataset.goto; };
+      });
+    }
+    function closeCmd() { backdrop.classList.add('hidden'); }
+    function openCmd() { backdrop.classList.remove('hidden'); cmdInput.value = ''; renderCmd(''); cmdInput.focus(); }
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openCmd(); }
+      if (e.key === 'Escape') closeCmd();
+    });
+    cmdInput.oninput = function () { renderCmd(cmdInput.value); };
+    backdrop.onclick = function (e) { if (e.target === backdrop) closeCmd(); };
+
     document.querySelectorAll('[data-nav]').forEach(function (node) {
       node.onclick = function () { closeMobile(); location.hash = '#/' + node.dataset.nav; };
     });
