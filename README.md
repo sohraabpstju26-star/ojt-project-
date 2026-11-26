@@ -9,6 +9,16 @@ collect requests, utility billers, wallet management, administrative controls, a
 
 ---
 
+## 0. One-click permanent deployment (Render)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sohraabpstju26-star/ojt-project-)
+
+The `render.yaml` blueprint in this repo pre-fills the Python web service settings.
+Sign in with GitHub, confirm, and Render gives you a permanent URL like
+`https://payflow.onrender.com`. Free plan sleeps after inactivity; first visit may take ~30s.
+
+---
+
 ## 1. Quick start
 
 ```bash
